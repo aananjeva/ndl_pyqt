@@ -6,13 +6,13 @@ from dataclasses import dataclass
 from typing import List
 from enum import Enum
 
-class Command(Enum):
-    REGISTER_USER = "register_user"
-    LOCK = "lock"
-    UNLOCK = "unlock"
-    REMOVE_USER = "remove_user"
-    CHANGE_PASSWORD = "change_password"
-    LOGIN_USER = "login_user"
+# class Command(Enum):
+#     REGISTER_USER = "register_user"
+#     LOCK = "lock"
+#     UNLOCK = "unlock"
+#     REMOVE_USER = "remove_user"
+#     CHANGE_PASSWORD = "change_password"
+#     LOGIN_USER = "login_user"
 
 class Role(Enum):
     ROOT = "root"
@@ -29,6 +29,7 @@ class User:
         ssh_client = paramiko.SSHClient()
         ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh_client.connect(hostname='ndl@192.168.1.75', key_filename='/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/security/id_ed25519')
+        print("SSH connection established successfully.")
 
     def to_json(self):
         user_data = {
@@ -47,14 +48,19 @@ class User:
 
 
     def upload_pictures(self, ssh_client):
+        ssh_client = self.ssh()
+        if ssh_client is None:
+            print("SSH client not available. Exiting picture upload.")
+            return
         try:
             sftp = ssh_client.open_sftp()
             remote_dir = f"/home/ndl/images/{self.username.replace(' ', '_')}"
 
             try:
                 sftp.mkdir(remote_dir)
+                print(f"Directory {remote_dir} created successfully.")
             except IOError:
-                pass
+                print(f"Directory {remote_dir} already exists.")
 
             for picture in self.pictures:
                 local_path = f"{self.path}/{picture}"  # Local path of the picture
@@ -64,21 +70,11 @@ class User:
                 sftp.put(local_path, remote_path)
 
             sftp.close()
+            print("All pictures uploaded successfully.")
 
         except Exception as e:
-            print(e)
-
-    #do I need this?
-    def check_login_response(ssh_client, username):
-        response_file = f"/home/pi/{username}_response.txt"
-
-        try:
-            with ssh_client.open_sftp() as sftp:
-                with sftp.file(response_file, 'r') as file:
-                    response = file.read()
-                    print("Response from server:", response)
-                    return response.strip()
-        except Exception as e:
-            print(f"Error checking response: {e}")
-            return None
+            print(f"Error during picture upload: {e}")
+        finally:
+            ssh_client.close()
+            print("SSH connection closed.")
 

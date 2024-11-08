@@ -52,8 +52,32 @@ class UserCommands:
 
         self.mqtt_client.response_listener(topic_response, on_login_response)
 
+    # ------------------------------------------------------------------------------
 
-#------------------------------------------------------------------------------
+    def forgot_password(self):
+        topic_ask = "press_button_ask"
+        topic_response = "press_button_response"
+
+        press_button_data = {
+            "command": "press_button_ask"
+        }
+
+        press_button_json = json.dumps(press_button_data)
+        self.mqtt_client.send_to_topic(topic_ask, press_button_json)
+
+        QMessageBox.information(None, "Forgot Password", "Please press the button on the lock manually.")
+
+        def on_press_button_response(client, userdata, msg):
+            response = msg.payload.decode()
+
+            if response == "ok":
+                self.ui_reference.stack.setCurrentWidget(self.ui_reference.default_password_page)
+            else:
+                QMessageBox.information(None, "Error", "Please press the button again")
+
+        self.mqtt_client.response_listener(topic_response, on_press_button_response)
+
+    #------------------------------------------------------------------------------
     def register(self, username, password, repeat_password, pictures):
         topic_ask = "register_ask"
         topic_response = "register_response"

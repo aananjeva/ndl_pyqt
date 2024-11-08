@@ -1,6 +1,5 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QListWidget, QLabel
 
-
 class UI(QWidget):
     def __init__(self):
         super().__init__()
