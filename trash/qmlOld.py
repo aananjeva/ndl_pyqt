@@ -42,7 +42,7 @@ ApplicationWindow {
 
   Component {
    id: loginPage
-   
+
    Rectangle {
        anchors.fill: parent
        color: "white"
@@ -243,7 +243,7 @@ ApplicationWindow {
                   verticalAlignment: TextInput.AlignVCenter
               }
           }
-          
+
               Button {
                   text: "Register"
                   width: 600  // Set a specific width
@@ -835,10 +835,6 @@ Dialog {
                   }
               }
           }
-   }
-   
-   Component {
-        id: 
    }
 }
 """
