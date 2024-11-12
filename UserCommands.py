@@ -1,4 +1,8 @@
 import json
+
+import cv2
+from PySide6.QtCore import Slot
+
 from mqtt import MQTTClient
 import hashlib
 import re
@@ -8,6 +12,7 @@ class UserCommands:
     def __init__(self, mqtt_client, ui_reference):
         self.mqtt_client = mqtt_client
         self.ui_reference = ui_reference
+        self.current_user = None
 
         # Subscribe to all relevant topics
         self.mqtt_client.response_listener("login_response", self.handle_login_response)
@@ -26,6 +31,13 @@ class UserCommands:
 
     def get_stored_password(self):
         return self._stored_password_hash
+
+    def get_current_username(self):
+        if self.current_user:
+            return self.current_user
+        else:
+            QMessageBox.information(None, "Error", "User not logged in")
+            return None
 
 # ------------------------------------------------------------------------------
     def login(self, username, password):
@@ -81,9 +93,6 @@ class UserCommands:
     def register(self, username, password, repeat_password, pictures):
         topic_ask = "register_ask"
         topic_response = "register_response"
-
-        if(password != repeat_password):
-            QMessageBox.information(None, "Error", "Passwords do not match")
 
         if len(password) < 8:
             QMessageBox.information(None, "Error", "Password must be at least 8 characters")
@@ -154,7 +163,7 @@ class UserCommands:
 
     #------------------------------------------------------------------------------
 
-    def change_password(self, old_password, new_password):
+    def change_password(self, username, old_password, new_password):
         topic_ask = "change_password_ask"
         topic_response = "change_password_response"
 
@@ -183,7 +192,8 @@ class UserCommands:
         hashed_new_password = self.hash_password(new_password)
 
         new_password_data = {
-            "password": hashed_new_password,
+            "username": username,
+            "password": hashed_new_password
         }
 
         new_password_json = json.dumps(new_password_data)
@@ -207,6 +217,7 @@ class UserCommands:
         topic_response = "lock_response"
 
         self.intended_state = current_state
+        command = "lock" if current_state else "unlock"
         self.mqtt_client.send_to_topic(topic_ask, json.dumps({"command": "lock_ask"}))
 
         def on_lock_response(client, userdata, msg):
@@ -214,15 +225,17 @@ class UserCommands:
 
             if response == "ok":
                 self.door_locked = self.intended_state
-                if self.door_locked:
-                    self.ui_reference.root_context.setContextProperty("doorSwitchChecked", True)
-                else:
-                    self.ui_reference.root_context.setContextProperty("doorSwitchChecked", False)
+                self.ui_reference.root_context.setContextProperty(
+                    "doorSwitchChecked", self.door_locked
+                )
             else:
                 QMessageBox.information(None, "Error", "Failed to change the door status.")
-                self.ui_reference.root_context.setContextProperty("doorSwitchChecked", not self.intended_state)
+                self.ui_reference.root_context.setContextProperty(
+                    "doorSwitchChecked", not self.intended_state
+                )
 
         self.mqtt_client.response_listener(topic_response, on_lock_response)
+
 
     #------------------------------------------------------------------------------
 
@@ -236,11 +249,22 @@ class UserCommands:
             response = msg.payload.decode()
             if response == "ok":
                 active_users = response.get("users", [])
-                self.ui_reference.update_active_users_list(active_users)
+                self.update_active_users_list(active_users)
             else:
                 QMessageBox.information(None, "Error", "Active users list is empty")
 
         self.mqtt_client.response_listener(topic_response, on_active_users_ask_response)
+
+        @Slot(list)
+        def update_active_users_list(self, active_users):
+            # Clear the existing model
+            self.ui_reference.root_context.setContextProperty("activeUsersModel", [])
+
+            # Add each user to the model
+            for user in active_users:
+                self.ui_reference.root_context.setContextProperty("activeUsersModel", {
+                    "name": user["name"]
+                })
 
     #------------------------------------------------------------------------------
 
@@ -248,17 +272,25 @@ class UserCommands:
         topic_ask = "all_members_ask"
         topic_response = "all_members_response"
 
-        self.mqtt_client.send_to_topic(topic_ask, json.dumps({"command": "active_members_ask"}))
+        self.mqtt_client.send_to_topic(topic_ask, json.dumps({"command": "all_members_ask"}))
 
         def on_all_members_ask_response(client, userdata, msg):
             response = msg.payload.decode()
-            if response == "ok":
-                active_users = response.get("users", [])
-                self.ui_reference.update_active_users_list(active_users)
-            else:
-                QMessageBox.information(None, "Error", "Active users list is empty")
+            if response.get("status") == "ok":
+                members = response.get("members", [])
 
-        self.mqtt_client.response_listener(topic_response, on_all_members_ask_response)
+                self.ui_reference.root_context.setContextProperty("membersModel", [])
+
+                for member in members:
+                    self.ui_reference.root_context.setContextProperty("membersModel", {
+                        "name": member["name"],
+                        "status": member["status"]
+                    })
+            else:
+                QMessageBox.information(None, "Error", "Failed to retrieve members list")
+
+            self.mqtt_client.response_listener(topic_response, on_all_members_ask_response)
+
 
     #------------------------------------------------------------------------------
 
@@ -286,7 +318,7 @@ class UserCommands:
         self.mqtt_client.response_listener(topic_response, on_delete_response)
 
     #------------------------------------------------------------------------------
-
+    @Slot(str, str)
     def change_member(self, member_name, new_member_name):
         topic_ask = "change_member_ask"
         topic_response = "change_member_response"
@@ -310,7 +342,7 @@ class UserCommands:
         self.mqtt_client.response_listener(topic_response, on_change_member_response)
 
     #------------------------------------------------------------------------------
-
+    @Slot(str, bool)
     def change_member_status(self, member_name, member_status):
         topic_ask = "change_member_status_ask"
         topic_response = "change_member_status_response"
@@ -372,4 +404,20 @@ class UserCommands:
 
         self.mqtt_client.response_listener(topic_response, on_new_member_response)
 
+    #------------------------------------------------------------------------------
 
+    def open_camera_and_take_pictures(self):
+        pictures = []
+        cap = cv2.VideoCapture(0)
+
+        for i in range(6):
+            ret, frame = cap.read()
+            if ret:
+                file_path = f"/path/to/save/picture_{i}.jpg"
+                cv2.imwrite(file_path, frame)
+                pictures.append(file_path)
+            cv2.waitKey(1000)  # Wait 1 second between captures
+
+        cap.release()
+        cv2.destroyAllWindows()
+        return pictures

@@ -35,7 +35,7 @@ ApplicationWindow {
 
           MouseArea {
               anchors.fill: parent
-              onClicked: stackView.push(loginPage) // Fixed: Added the missing parenthesis here
+              onClicked: stackView.push(loginPage) 
           }
       }
   }
@@ -50,7 +50,7 @@ ApplicationWindow {
        ColumnLayout {
            anchors.horizontalCenter: parent.horizontalCenter
            anchors.verticalCenter: parent.verticalCenter
-           spacing: 20  // Space between elements
+           spacing: 20  
 
            Text {
                text: "Welcome to SmartLock"
@@ -95,7 +95,6 @@ ApplicationWindow {
                }
            }
 
-           // Use a ColumnLayout to stack the buttons vertically
            ColumnLayout {
                spacing: 10
                Layout.alignment: Qt.AlignHCenter
@@ -123,8 +122,7 @@ ApplicationWindow {
                    MouseArea {
                        anchors.fill: parent  
                        onClicked: {
-                           // Show the notification
-                           messageDialog.open()
+                           python.on_forgot_password_button_click()
                        }
                    }
                }
@@ -136,9 +134,9 @@ ApplicationWindow {
                    color: "black"  // Change text color to indicate it's clickable
                    Layout.alignment: Qt.AlignHCenter | Qt.AlignBottom
                    MouseArea {
-                       anchors.fill: parent  // Make the MouseArea fill the entire text area
+                       anchors.fill: parent  
                        onClicked: {
-                           stackView.push(registerPage) // Add the missing parenthesis here
+                           stackView.push(registerPage) 
                        }
                    }
                }
@@ -152,8 +150,6 @@ ApplicationWindow {
        }
    }
 }
-
-
 
 
 
@@ -245,6 +241,15 @@ ApplicationWindow {
           }
           
               Button {
+                text: "Take Pictures"
+                
+                onClicked: {
+                    python.open_camera_and_take_pictures()
+                }
+              }
+
+              
+              Button {
                   text: "Register"
                   width: 600  // Set a specific width
                   height: 300  // Set a specific height
@@ -270,55 +275,71 @@ ApplicationWindow {
       }
   }
 
+  Component {
+    id: addPicturesPage
 
- Component {
-   id: firstUserPage
+    Rectangle {
+        anchors.fill: parent
+        color: "white"
+        
+        Button {
+              text: "←"  // You can replace this with an icon if you prefer
+              font.pointSize: 20
+              background: Rectangle {
+                  color: "white"
+              }
+              onClicked: {
+                  stackView.pop()  // Go back to the login page
+              }
+        }
 
+        ColumnLayout {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 20 
 
-   Rectangle {
-       width: parent.width
-       height: parent.height
-       color: "white"
+            Text {
+                text: "Please make 6 pictures from different angles"
+                font.pointSize: 20
+                font.bold: true
+                color: "black"
+                horizontalAlignment: Text.AlignHCenter
+            }
 
+            Rectangle {
+                id: picturePreview
+                width: 300
+                height: 300
+                color: "#f0f0f0"
+                border.color: "gray"
+                border.width: 1
 
-       // Use a ColumnLayout for the inner layout
-       ColumnLayout {
-           spacing: 20
-           anchors.centerIn: parent
+                Text {
+                    text: "Picture Preview"
+                    anchors.centerIn: parent
+                    color: "gray"
+                }
+            }
 
+            Button {
+                text: "Take Pictures"
+                Layout.alignment: Qt.AlignHCenter
+                onClicked: {
+                    // Call the Python function to open the camera and take pictures
+                    python.open_camera_and_take_pictures()
+                }
+            }
 
-           // Title text
-           Text {
-               text: "Be the first one"
-               font.pointSize: 24
-               font.bold: true
-               horizontalAlignment: Text.AlignHCenter
-           }
-
-
-           // Input field for the name
-           TextField {
-               id: nameInput
-               placeholderText: "Enter your name"
-               width: parent.width * 0.8
-           }
-
-
-           // Button to open the camera
-           Button {
-               text: "Add Pictures"
-               font.pointSize: 15
-               Layout.alignment: Qt.AlignHCenter
-
-
-               onClicked: {
-                    // Call the function to open the camera
-               }
-           }
-       }
-
-   }
-}
+            Button {
+                text: "Done"
+                Layout.alignment: Qt.AlignHCenter
+                onClicked: {
+                    stackView.pop() 
+                }
+            }
+        }
+    }  
+  }
 
  Component {
    id: mainPage
@@ -330,7 +351,7 @@ ApplicationWindow {
 
        ColumnLayout {
            anchors.fill: parent
-           anchors.margins: 20  // Margins around the ColumnLayout
+           anchors.margins: 20  
 
            Text {
                id: settingsButton
@@ -339,12 +360,11 @@ ApplicationWindow {
                color: "grey"
                Layout.alignment: Qt.AlignLeft
                MouseArea {
-                   anchors.fill: parent  // Make the MouseArea fill the entire text area
+                   anchors.fill: parent  
                    onClicked: settingsDialog.open()
                }
            }
 
-           // Door Status Text
            Text {
                id: doorStatusText
                text: "The door is unlocked"
@@ -355,18 +375,16 @@ ApplicationWindow {
                Layout.alignment: Qt.AlignHCenter
            }
 
-
-           // Switch for Door Status
            Switch {
                id: doorSwitch
                scale: 1.5
+               checked: false  // Initial state
                onCheckedChanged: {
-                   doorStatusText.text = doorSwitch.checked ? "The door is locked" : "The door is unlocked"
+                  python.on_lock_unlock_button_click(doorSwitch.checked)
                }
                Layout.alignment: Qt.AlignHCenter
            }
 
-           // Active Users Header
            Text {
                text: "The last active users:"
                font.pointSize: 20
@@ -375,58 +393,27 @@ ApplicationWindow {
                Layout.alignment: Qt.AlignHCenter
            }
 
-           // List of Active Users
-           ColumnLayout {
-               spacing: 10  // Space between user entries
-               Layout.alignment: Qt.AlignHCenter
+           ListView {
+                id: activeUsersListView
+                width: parent.width
+                height: 200 // Adjust the height as needed
+                model: activeUsersModel
 
+                delegate: RowLayout {
+                    spacing: 10
 
-               // Replace these with dynamic entries if needed
-               Row {
-                   spacing: 10
-                   Image {
-                       source: "/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/.venv/images/user_icon.png"
-                       width: 30
-                       height: 30
-                   }
-                   Text {
-                       text: "name 1"
-                       font.pointSize: 18
-                   }
-               }
+                    Image {
+                        source: "/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/.venv/images/user_icon.png"
+                        width: 30
+                        height: 30
+                    }
 
-
-               Row {
-                   spacing: 10
-                   Image {
-                       source: "/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/.venv/images/user_icon.png"
-                       width: 30
-                       height: 30
-                   }
-                   Text {
-                       text: "name 2"
-                       font.pointSize: 18
-                   }
-               }
-
-
-               Row {
-                   spacing: 10
-                   Image {
-                       source: "/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/.venv/images/user_icon.png"
-                       width: 30
-                       height: 30
-                   }
-                   Text {
-                       text: "name 3"
-                       font.pointSize: 18
-                   }
-               }
-
-
-               // Add more users as needed
+                    Text {
+                        text: model.name
+                        font.pointSize: 18
+                    }
+                }
            }
-
 
            // Bottom Navigation Bar
            RowLayout {
@@ -464,6 +451,7 @@ ApplicationWindow {
        }
    }
 }
+
 Dialog {
    id: settingsDialog
    width: 400
@@ -533,221 +521,340 @@ Dialog {
    }
 }
 
+Dialog {
+    id: changePasswordDialog
+    width: 400
+    height: 350
+    modal: true
+    visible: false
+
+    Rectangle {
+        anchors.fill: parent
+        color: "white"
+        radius: 10  // Optional: rounded corners
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 20
+            spacing: 10
+
+            Text {
+                text: "Change Password"
+                font.pointSize: 24
+                font.bold: true
+                color: "black"
+                horizontalAlignment: Text.AlignHCenter
+            }
+
+            Rectangle {
+                width: parent.width
+                height: 50
+                color: "white"
+                border.color: "gray"
+                border.width: 1
+
+                TextField {
+                    id: currentPasswordField
+                    placeholderText: "Current password"
+                    anchors.fill: parent
+                    padding: 10
+                    font.pointSize: 18
+                    echoMode: TextInput.Password
+                    verticalAlignment: TextInput.AlignVCenter
+                }
+            }
+
+            Rectangle {
+                width: parent.width
+                height: 50
+                color: "white"
+                border.color: "gray"
+                border.width: 1
+
+                TextField {
+                    id: newPasswordField
+                    placeholderText: "New password"
+                    anchors.fill: parent
+                    padding: 10
+                    font.pointSize: 18
+                    echoMode: TextInput.Password
+                    verticalAlignment: TextInput.AlignVCenter
+                }
+            }
+
+            Rectangle {
+                width: parent.width
+                height: 50
+                color: "white"
+                border.color: "gray"
+                border.width: 1
+
+                TextField {
+                    id: repeatNewPasswordField
+                    placeholderText: "Repeat new password"
+                    anchors.fill: parent
+                    padding: 10
+                    font.pointSize: 18
+                    echoMode: TextInput.Password
+                    verticalAlignment: TextInput.AlignVCenter
+                }
+            }
+
+            Button {
+                text: "Change Password"
+                Layout.alignment: Qt.AlignHCenter
+                onClicked: {
+                    python.on_change_password_button_click(
+                        currentPasswordField.text, 
+                        newPasswordField.text, 
+                        repeatNewPasswordField.text
+                    )
+                }
+            }
+
+            Button {
+                text: "Cancel"
+                Layout.alignment: Qt.AlignHCenter
+                onClicked: changePasswordDialog.close()
+            }
+        }
+    }
+}
+
+
+  ListModel {
+    id: activeUsersModel
+  }
+  
   Component {
-       id: membersPage
+    id: membersPage
 
-       Rectangle {
-           width: parent.width
-           height: parent.height
-           color: "white"
+    Rectangle {
+        width: parent.width
+        height: parent.height
+        color: "white"
 
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: 20  // Space between elements
+            anchors.margins: 20  // Margins around the ColumnLayout
 
-           ColumnLayout {
-               anchors.fill: parent
-               spacing: 20  // Space between elements
-               anchors.margins: 20  // Margins around the ColumnLayout
+            // Title
+            Text {
+                text: "All the members"
+                font.pointSize: 24
+                font.bold: true
+                horizontalAlignment: Text.AlignHCenter
+                color: "black"
+                Layout.alignment: Qt.AlignHCenter
+            }
 
+            // List of Users
+            ListView {
+                id: membersListView
+                width: parent.width
+                height: 400  // Adjust the height as needed
+                model: membersModel
 
-               // Title
-               Text {
-                   text: "All the members"
-                   font.pointSize: 24
-                   font.bold: true
-                   horizontalAlignment: Text.AlignHCenter
-                   color: "black"
-                   Layout.alignment: Qt.AlignHCenter
-               }
+                delegate: RowLayout {
+                    spacing: 10
 
+                    // Profile Icon
+                    Image {
+                        source: "qtt"  // Replace with the actual icon source
+                        width: 24
+                        height: 24
+                    }
 
-               // List of Users
-               ColumnLayout {
-                   Layout.alignment: Qt.AlignHCenter
-                   spacing: 10  // Space between user entries
+                    // User Name
+                    Text {
+                        text: model.name
+                        font.pointSize: 18
+                        color: "black"
+                    }
 
+                    // Status (In/Out)
+                    Text {
+                        text: model.status
+                        font.pointSize: 18
+                        color: model.status === "In" ? "green" : "red"  // Color based on status
+                    }
 
-                   // Example User Entries
-                   Repeater {
-                       model: 5  // Replace with the actual model of members
+                    // Edit Button
+                    Button {
+                        text: "Edit"
+                        onClicked: {
+                            console.log("Editing " + model.name)
+                            editUserDialog.open()  // Open the edit user dialog
+                        }
+                    }
+                }
+            }
 
+            // + Button to open the new user dialog
+            RowLayout {
+                Layout.alignment: Qt.AlignLeft
+                Text {
+                    id: settingsButton
+                    text: "+"
+                    font.pointSize: 40
+                    color: "grey"
+                    Layout.alignment: Qt.AlignLeft
+                    MouseArea {
+                        anchors.fill: parent  // Make the MouseArea fill the entire text area
+                        onClicked: newUserDialog.open()
+                    }
+                }
+            }
 
-                       RowLayout {
-                           spacing: 10
-                           Layout.alignment: Qt.AlignHCenter
+            // Bottom Navigation Bar
+            RowLayout {
+                Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
+                anchors.margins: 20
 
+                Button {
+                    icon.source: "/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/.venv/images/home.png"
+                    icon.width: 35
+                    icon.height: 35
+                    icon.color: "grey"
+                    onClicked: stackView.push(mainPage)
+                    width: 250
+                    height: 80
+                    Layout.preferredWidth: 250
+                    Layout.preferredHeight: 80
+                }
 
-                           // Profile Icon
-                           Image {
-                               source: "qtt"
-                               width: 24
-                               height: 24
-                           }
+                Button {
+                    icon.source: "/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/.venv/images/team.png"
+                    icon.width: 35
+                    height: 35
+                    icon.color: "grey"
+                    onClicked: stackView.push()
+                    width: 250
+                    height: 80
+                    Layout.preferredWidth: 250
+                    Layout.preferredHeight: 80
+                }
+            }
+        }
+    }
+}
 
+// Define a ListModel to hold the members
+ListModel {
+    id: membersModel
+}
 
-                           // User Name
-                           Text {
-                               text: "User " + (index + 1)  // Replace with actual user data
-                               font.pointSize: 18
-                               color: "black"
-                           }
-
-
-                           // Edit Button
-                           Button {
-                               text: "Edit"
-                               onClicked: {
-                                   console.log("Editing User " + (index + 1))
-                                   onClicked: editUserDialog.open()  // Open the edit user page
-                               }
-                           }
-                       }
-                   }
-               }
-
-
-               // + Button to open the dialog
-               RowLayout {
-                   Layout.alignment: Qt.AlignLeft
-                   Text {
-                       id: settingsButton
-                       text: "+"
-                       font.pointSize: 40
-                       color: "grey"
-                       Layout.alignment: Qt.AlignLeft
-                       MouseArea {
-                           anchors.fill: parent  // Make the MouseArea fill the entire text area
-                           onClicked: newUserDialog.open()
-                       }
-                   }
-               }
-
-               RowLayout {
-                  Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
-                  anchors.margins: 20  // Margins for the navigation bar
-
-
-
-
-               Button {
-                   icon.source: "/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/.venv/images/home.png"
-                   icon.width: 35
-                   icon.height: 35
-                   icon.color: "grey"
-                   onClicked: stackView.push(mainPage) 
-                   width: 250 
-                   height: 80 
-                   Layout.preferredWidth: 250 
-                   Layout.preferredHeight: 80
-               }
-
-
-               Button {
-                   icon.source: "/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/.venv/images/team.png"
-                   icon.width: 35
-                   icon.height: 35
-                   icon.color: "grey"
-                   onClicked: stackView.push()
-                   width: 250 
-                   height: 80 
-                   Layout.preferredWidth: 250 
-                   Layout.preferredHeight: 80
-               }
-          }
-           }
-
-       }
-   }
 
    Dialog {
-       id: editUserDialog
-       modal: true    
-       width: 400
-       height: 599
-       anchors.centerIn: parent
+    id: editUserDialog
+    modal: true    
+    width: 400
+    height: 599
+    anchors.centerIn: parent
 
-       Rectangle {
-           id: overlay2
-           anchors.fill: parent
-           color: "white"
-           radius: 10
-       }
+    Rectangle {
+        id: overlay2
+        anchors.fill: parent
+        color: "white"
+        radius: 10
+    }
 
-       ColumnLayout {
-           anchors.horizontalCenter: parent.horizontalCenter
-           anchors.verticalCenter: parent.verticalCenter
-           spacing: 10
+    ColumnLayout {
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: 10
 
+        Text {
+            id: editUserText
+            font.pointSize: 20
+            horizontalAlignment: Text.AlignHCenter
+        }
 
-           Text {
-               id: editUserText
-               font.pointSize: 20
-               horizontalAlignment: Text.AlignHCenter
-           }
+        // Field for editing the member name
+        Rectangle {
+            width: 300
+            height: 50
+            color: "white"
+            border.color: "gray"
+            border.width: 1
 
+            TextField {
+                id: editUserField
+                placeholderText: "New Name"
+                anchors.fill: parent
+                padding: 10
+                font.pointSize: 18
+                verticalAlignment: TextInput.AlignVCenter
+            }
+        }
 
-           Rectangle {
-               width: 300
-               height: 50
-               color: "white"
-               border.color: "gray"
-               border.width: 1
+        // Dropdown or switch to change status (e.g., In/Out or Access/No Access)
+        RowLayout {
+            spacing: 10
+            Text {
+                text: "Status:"
+                font.pointSize: 18
+                color: "black"
+            }
+            ComboBox {
+                id: statusComboBox
+                model: ["In", "Out"]  // You can use this to set the status
+                currentIndex: 0
+            }
+        }
 
+        // Save Button
+        Button {
+            text: "Save"
+            width: 100
+            height: 30
+            Layout.preferredWidth: 100
+            Layout.preferredHeight: 30
+            background: Rectangle {
+                radius: 10
+                border.color: "gray"
+                border.width: 1
+            }
+            Layout.alignment: Qt.AlignHCenter
 
-               TextField {
-                   id: editUserField
-                   placeholderText: "New Name"
-                   anchors.fill: parent
-                   padding: 10
-                   font.pointSize: 18
-                   verticalAlignment: TextInput.AlignVCenter
-               }
-           }
+            // Save logic
+            onClicked: {
+                // Get the new name and status
+                var newName = editUserField.text
+                var newStatus = statusComboBox.currentText
 
+                // Call Python functions to update member name and status
+                python.change_member(editUserDialog.userName, newName)
+                python.change_member_status(editUserDialog.userName, newStatus === "In")
+                
+                // Close the dialog
+                editUserDialog.close()
+            }
+        }
 
-           Button {
-               text: "Save"
-               width: 100  // Set a specific width
-               height: 30  // Set a specific height
-               Layout.preferredWidth: 100
-               Layout.preferredHeight: 30
+        // Cancel Button
+        Text {
+            id: cancelButton
+            text: "Cancel"
+            font.pointSize: 12
+            color: "black"
+            Layout.alignment: Qt.AlignHCenter
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    editUserDialog.close()
+                }
+            }
+        }
+    }
 
+    onOpened: {
+        editUserText.text = "Editing: " + editUserDialog.userName
+        editUserField.text = editUserDialog.userName
+    }
+}
 
-               background: Rectangle {
-                   radius: 10  // Round the corners
-                   border.color: "gray"  // Set a border color
-                   border.width: 1  // Set border width
-               }
-
-
-
-
-               Layout.alignment: Qt.AlignHCenter
-               onClicked: {
-               }
-           }
-
-
-           Text {
-               id: cancelButton
-               text: "Cancel"
-               font.pointSize: 12
-               color: "black"  // Change text color to indicate it's clickable
-               Layout.alignment: Qt.AlignHCenter
-               MouseArea {
-                   anchors.fill: parent  // Make the MouseArea fill the entire text area
-                   onClicked: {
-                       editUserDialog.close()
-                   }
-               }
-           }
-
-
-       }
-
-       onOpened: {
-          editUserText.text = "Editing: " + editUserDialog.userName // Update dialog title
-          editUserField.text = editUserDialog.userName // Pre-fill the field
-       }
-   }
 
    Dialog {
        id: newUserDialog
@@ -767,10 +874,7 @@ Dialog {
        ColumnLayout {
           anchors.horizontalCenter: parent.horizontalCenter
           anchors.verticalCenter: parent.verticalCenter
-          spacing: 20   // Space between elements
-
-
-
+          spacing: 20
 
           Text {
               text: "Create a new member"
@@ -799,18 +903,12 @@ Dialog {
           }
 
                Button {
-                   text: "Add Photos"
-                   width: 150
-                   height: 50
-                   Layout.preferredWidth: 150
-                   Layout.preferredHeight: 50
-                   onClicked: {
-                       // Logic to open the camera
-                       console.log("Open camera to add photos")
-                       // You would need to implement the actual camera logic here
-                   }
-       }
-
+                text: "Take Pictures"
+                
+                onClicked: {
+                    python.open_camera_and_take_pictures()
+                }
+              }
 
               Button {
                   text: "Create"
@@ -837,8 +935,6 @@ Dialog {
           }
    }
    
-   Component {
-        id: 
-   }
+   
 }
 """
