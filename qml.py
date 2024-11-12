@@ -41,115 +41,115 @@ ApplicationWindow {
   }
 
   Component {
-   id: loginPage
+       id: loginPage
    
-   Rectangle {
-       anchors.fill: parent
-       color: "white"
-
-       ColumnLayout {
-           anchors.horizontalCenter: parent.horizontalCenter
-           anchors.verticalCenter: parent.verticalCenter
-           spacing: 20  
-
-           Text {
-               text: "Welcome to SmartLock"
-               font.pointSize: 24
-               font.bold: true
-               color: "black"
-               horizontalAlignment: Text.AlignHCenter
-           }
-
-           Rectangle {
-               width: 300
-               height: 50
-               color: "white"
-               border.color: "gray"
-               border.width: 1
-
-               TextField {
-                   id: usernameField
-                   placeholderText: "username"
-                   anchors.fill: parent
-                   padding: 10
-                   font.pointSize: 18
-                   verticalAlignment: TextInput.AlignVCenter
-               }
-           }
-
-           Rectangle {
-               width: 300
-               height: 50
-               color: "white"
-               border.color: "gray"
-               border.width: 1
-
-               TextField {
-                   id: passwordField
-                   placeholderText: "password"
-                   anchors.fill: parent
-                   padding: 10
-                   font.pointSize: 18
-                   echoMode: TextInput.Password
-                   verticalAlignment: TextInput.AlignVCenter
-               }
-           }
+       Rectangle {
+           anchors.fill: parent
+           color: "white"
 
            ColumnLayout {
-               spacing: 10
-               Layout.alignment: Qt.AlignHCenter
-
-               Button {
-                   text: "Login"
-                   width: 300 
-                   height: 50 
-                   Layout.preferredWidth: 300 
-                   Layout.preferredHeight: 50
-                   onClicked: {
-                       python.on_login_button_click(
-                            usernameField.text,
-                            passwordField.text
-                       )
+               anchors.horizontalCenter: parent.horizontalCenter
+               anchors.verticalCenter: parent.verticalCenter
+               spacing: 20  
+    
+               Text {
+                   text: "Welcome to SmartLock"
+                   font.pointSize: 24
+                   font.bold: true
+                   color: "black"
+                   horizontalAlignment: Text.AlignHCenter
+               }
+    
+               Rectangle {
+                   width: 300
+                   height: 50
+                   color: "white"
+                   border.color: "gray"
+                   border.width: 1
+    
+                   TextField {
+                       id: usernameField
+                       placeholderText: "username"
+                       anchors.fill: parent
+                       padding: 10
+                       font.pointSize: 18
+                       verticalAlignment: TextInput.AlignVCenter
                    }
                }
-
-               Text {
-                   id: forgotPasswordButton
-                   text: "Forgot the password"
-                   font.pointSize: 12
-                   color: "black"  // Change text color to indicate it's clickable
+    
+               Rectangle {
+                   width: 300
+                   height: 50
+                   color: "white"
+                   border.color: "gray"
+                   border.width: 1
+    
+                   TextField {
+                       id: passwordField
+                       placeholderText: "password"
+                       anchors.fill: parent
+                       padding: 10
+                       font.pointSize: 18
+                       echoMode: TextInput.Password
+                       verticalAlignment: TextInput.AlignVCenter
+                   }
+               }
+    
+               ColumnLayout {
+                   spacing: 10
                    Layout.alignment: Qt.AlignHCenter
-                   MouseArea {
-                       anchors.fill: parent  
+    
+                   Button {
+                       text: "Login"
+                       width: 300 
+                       height: 50 
+                       Layout.preferredWidth: 300 
+                       Layout.preferredHeight: 50
                        onClicked: {
-                           python.on_forgot_password_button_click()
+                           python.on_login_button_click(
+                                usernameField.text,
+                                passwordField.text
+                           )
+                       }
+                   }
+    
+                   Text {
+                       id: forgotPasswordButton
+                       text: "Forgot the password"
+                       font.pointSize: 12
+                       color: "black"  // Change text color to indicate it's clickable
+                       Layout.alignment: Qt.AlignHCenter
+                       MouseArea {
+                           anchors.fill: parent  
+                           onClicked: {
+                               python.on_forgot_password_button_click()
+                           }
+                       }
+                   }
+    
+                   Text {
+                       id: registerButton
+                       text: "I do not have an account"
+                       font.pointSize: 12
+                       color: "black"  // Change text color to indicate it's clickable
+                       Layout.alignment: Qt.AlignHCenter | Qt.AlignBottom
+                       MouseArea {
+                           anchors.fill: parent  
+                           onClicked: {
+                               stackView.push(registerPage) 
+                           }
                        }
                    }
                }
-
-               Text {
-                   id: registerButton
-                   text: "I do not have an account"
-                   font.pointSize: 12
-                   color: "black"  // Change text color to indicate it's clickable
-                   Layout.alignment: Qt.AlignHCenter | Qt.AlignBottom
-                   MouseArea {
-                       anchors.fill: parent  
-                       onClicked: {
-                           stackView.push(registerPage) 
-                       }
-                   }
+    
+               MessageDialog {
+                   id: messageDialog
+                   text: "Please press the button on the lock manually."
+                   modal: true
                }
-           }
-
-           MessageDialog {
-               id: messageDialog
-               text: "Please press the button on the lock manually."
-               modal: true
            }
        }
-   }
-}
+  }
 
 
 
@@ -160,86 +160,86 @@ ApplicationWindow {
       anchors.fill: parent
       color: "white"
 
-      ColumnLayout {
-          anchors.horizontalCenter: parent.horizontalCenter
-          anchors.verticalCenter: parent.verticalCenter
-          spacing: 20   // Space between elements
-
-          Button {
-              text: "←"  // You can replace this with an icon if you prefer
-              font.pointSize: 20
-              background: Rectangle {
+          ColumnLayout {
+              anchors.horizontalCenter: parent.horizontalCenter
+              anchors.verticalCenter: parent.verticalCenter
+              spacing: 20   // Space between elements
+    
+              Button {
+                  text: "←"  // You can replace this with an icon if you prefer
+                  font.pointSize: 20
+                  background: Rectangle {
+                      color: "white"
+                  }
+                  onClicked: {
+                      stackView.pop()  // Go back to the login page
+                  }
+              }
+    
+              Text {
+                  text: "Create an account"
+                  font.pointSize: 24
+                  font.bold: true
+                  color: "black"
+                  horizontalAlignment: Text.AlignHCenter
+              }
+    
+              Rectangle {
+                  width: 300
+                  height: 50
                   color: "white"
+                  border.color: "gray"
+                  border.width: 1
+    
+                  TextField {
+                      id: registerUsernameField
+                      placeholderText: "username"
+                      anchors.fill: parent
+                      padding: 10
+                      font.pointSize: 18
+                      verticalAlignment: TextInput.AlignVCenter
+                  }
               }
-              onClicked: {
-                  stackView.pop()  // Go back to the login page
+    
+              Rectangle {
+                  width: 300
+                  height: 50
+                  color: "white"
+                  border.color: "gray"
+                  border.width: 1
+    
+    
+                  TextField {
+                      id: registerPasswordField
+                      placeholderText: "password"
+                      anchors.fill: parent
+                      padding: 10
+                      font.pointSize: 18
+                      echoMode: TextInput.Password
+                      verticalAlignment: TextInput.AlignVCenter
+                  }
               }
-          }
-
-          Text {
-              text: "Create an account"
-              font.pointSize: 24
-              font.bold: true
-              color: "black"
-              horizontalAlignment: Text.AlignHCenter
-          }
-
-          Rectangle {
-              width: 300
-              height: 50
-              color: "white"
-              border.color: "gray"
-              border.width: 1
-
-              TextField {
-                  id: registerUsernameField
-                  placeholderText: "username"
-                  anchors.fill: parent
-                  padding: 10
-                  font.pointSize: 18
-                  verticalAlignment: TextInput.AlignVCenter
+    
+    
+              Rectangle {
+                  width: 300
+                  height: 50
+                  color: "white"
+                  border.color: "gray"
+                  border.width: 1
+    
+    
+                  TextField {
+                      id: repeatPasswordField
+                      placeholderText: "repeat password"
+                      anchors.fill: parent
+                      padding: 10
+                      font.pointSize: 18
+                      echoMode: TextInput.Password
+                      verticalAlignment: TextInput.AlignVCenter
+                  }
               }
-          }
-
-          Rectangle {
-              width: 300
-              height: 50
-              color: "white"
-              border.color: "gray"
-              border.width: 1
-
-
-              TextField {
-                  id: registerPasswordField
-                  placeholderText: "password"
-                  anchors.fill: parent
-                  padding: 10
-                  font.pointSize: 18
-                  echoMode: TextInput.Password
-                  verticalAlignment: TextInput.AlignVCenter
-              }
-          }
-
-
-          Rectangle {
-              width: 300
-              height: 50
-              color: "white"
-              border.color: "gray"
-              border.width: 1
-
-
-              TextField {
-                  id: repeatPasswordField
-                  placeholderText: "repeat password"
-                  anchors.fill: parent
-                  padding: 10
-                  font.pointSize: 18
-                  echoMode: TextInput.Password
-                  verticalAlignment: TextInput.AlignVCenter
-              }
-          }
-          
+              
               Button {
                 text: "Take Pictures"
                 
@@ -247,8 +247,8 @@ ApplicationWindow {
                     python.open_camera_and_take_pictures()
                 }
               }
-
-              
+    
+                  
               Button {
                   text: "Register"
                   width: 600  // Set a specific width
@@ -272,7 +272,7 @@ ApplicationWindow {
                   }
               }
           }
-      }
+      }               
   }
 
   Component {
@@ -446,180 +446,176 @@ ApplicationWindow {
                    Layout.preferredHeight: 80
                }
            }
-
-
        }
    }
 }
 
-Dialog {
-   id: settingsDialog
-   width: 400
-   height: parent.height
-   modal: true 
-   visible: false
-
-
-   Rectangle {
-       anchors.fill: parent
-       color: "white" // Background color
-       radius: 10 // Optional: rounded corners
-
-
-       ColumnLayout {
+    Dialog {
+       id: settingsDialog
+       width: 400
+       height: parent.height
+       modal: true 
+       visible: false
+    
+    
+       Rectangle {
            anchors.fill: parent
-           anchors.margins: 20
-
-
-           Text {
-               text: "Account"
-               font.pointSize: 24
-               font.bold: true
-               color: "black"
-               horizontalAlignment: Text.AlignHCenter
-               Layout.alignment: Qt.AlignLeft
-           }
-
-
-            Text {
-               text: "Username: " + username 
-               font.pointSize: 18
-               color: "black"
-               Layout.alignment: Qt.AlignHCenter
-           }
-
-
-           Text {
-               text: "Change the password"
-               font.pointSize: 18
-               color: "black"  // Change color to indicate it's clickable
-               Layout.alignment: Qt.AlignLeft
-               MouseArea {
-                   anchors.fill: parent  // Make the MouseArea fill the entire text area
-                   onClicked: {
-                       changePasswordDialog.open() 
+           color: "white" // Background color
+           radius: 10 // Optional: rounded corners
+    
+    
+           ColumnLayout {
+               anchors.fill: parent
+               anchors.margins: 20
+    
+    
+               Text {
+                   text: "Account"
+                   font.pointSize: 24
+                   font.bold: true
+                   color: "black"
+                   horizontalAlignment: Text.AlignHCenter
+                   Layout.alignment: Qt.AlignLeft
+               }
+    
+    
+                Text {
+                   text: "Username: " + username 
+                   font.pointSize: 18
+                   color: "black"
+                   Layout.alignment: Qt.AlignHCenter
+               }
+    
+    
+               Text {
+                   text: "Change the password"
+                   font.pointSize: 18
+                   color: "black"  // Change color to indicate it's clickable
+                   Layout.alignment: Qt.AlignLeft
+                   MouseArea {
+                       anchors.fill: parent  // Make the MouseArea fill the entire text area
+                       onClicked: {
+                           changePasswordDialog.open() 
+                       }
+                   }
+               }
+    
+               Text {
+                   text: "Delete a profile"
+                   font.pointSize: 18
+                   color: "black"  // Change color to indicate it's clickable
+                   Layout.alignment: Qt.AlignLeft
+                   MouseArea {
+                       anchors.fill: parent  // Make the MouseArea fill the entire text area
+                       onClicked: {
+                           // Handle the delete profile action here
+                           console.log("Delete Profile clicked");
+                       }
                    }
                }
            }
-
-           Text {
-               text: "Delete a profile"
-               font.pointSize: 18
-               color: "black"  // Change color to indicate it's clickable
-               Layout.alignment: Qt.AlignLeft
-               MouseArea {
-                   anchors.fill: parent  // Make the MouseArea fill the entire text area
-                   onClicked: {
-                       // Handle the delete profile action here
-                       console.log("Delete Profile clicked");
-                   }
-               }
-           }
-
-
        }
-   }
-}
+    }
 
-Dialog {
-    id: changePasswordDialog
-    width: 400
-    height: 350
-    modal: true
-    visible: false
-
-    Rectangle {
-        anchors.fill: parent
-        color: "white"
-        radius: 10  // Optional: rounded corners
-
-        ColumnLayout {
+    Dialog {
+        id: changePasswordDialog
+        width: 400
+        height: 350
+        modal: true
+        visible: false
+    
+        Rectangle {
             anchors.fill: parent
-            anchors.margins: 20
-            spacing: 10
-
-            Text {
-                text: "Change Password"
-                font.pointSize: 24
-                font.bold: true
-                color: "black"
-                horizontalAlignment: Text.AlignHCenter
-            }
-
-            Rectangle {
-                width: parent.width
-                height: 50
-                color: "white"
-                border.color: "gray"
-                border.width: 1
-
-                TextField {
-                    id: currentPasswordField
-                    placeholderText: "Current password"
-                    anchors.fill: parent
-                    padding: 10
-                    font.pointSize: 18
-                    echoMode: TextInput.Password
-                    verticalAlignment: TextInput.AlignVCenter
+            color: "white"
+            radius: 10  // Optional: rounded corners
+    
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 20
+                spacing: 10
+    
+                Text {
+                    text: "Change Password"
+                    font.pointSize: 24
+                    font.bold: true
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
                 }
-            }
-
-            Rectangle {
-                width: parent.width
-                height: 50
-                color: "white"
-                border.color: "gray"
-                border.width: 1
-
-                TextField {
-                    id: newPasswordField
-                    placeholderText: "New password"
-                    anchors.fill: parent
-                    padding: 10
-                    font.pointSize: 18
-                    echoMode: TextInput.Password
-                    verticalAlignment: TextInput.AlignVCenter
+    
+                Rectangle {
+                    width: parent.width
+                    height: 50
+                    color: "white"
+                    border.color: "gray"
+                    border.width: 1
+    
+                    TextField {
+                        id: currentPasswordField
+                        placeholderText: "Current password"
+                        anchors.fill: parent
+                        padding: 10
+                        font.pointSize: 18
+                        echoMode: TextInput.Password
+                        verticalAlignment: TextInput.AlignVCenter
+                    }
                 }
-            }
-
-            Rectangle {
-                width: parent.width
-                height: 50
-                color: "white"
-                border.color: "gray"
-                border.width: 1
-
-                TextField {
-                    id: repeatNewPasswordField
-                    placeholderText: "Repeat new password"
-                    anchors.fill: parent
-                    padding: 10
-                    font.pointSize: 18
-                    echoMode: TextInput.Password
-                    verticalAlignment: TextInput.AlignVCenter
+    
+                Rectangle {
+                    width: parent.width
+                    height: 50
+                    color: "white"
+                    border.color: "gray"
+                    border.width: 1
+    
+                    TextField {
+                        id: newPasswordField
+                        placeholderText: "New password"
+                        anchors.fill: parent
+                        padding: 10
+                        font.pointSize: 18
+                        echoMode: TextInput.Password
+                        verticalAlignment: TextInput.AlignVCenter
+                    }
                 }
-            }
-
-            Button {
-                text: "Change Password"
-                Layout.alignment: Qt.AlignHCenter
-                onClicked: {
-                    python.on_change_password_button_click(
-                        currentPasswordField.text, 
-                        newPasswordField.text, 
-                        repeatNewPasswordField.text
-                    )
+    
+                Rectangle {
+                    width: parent.width
+                    height: 50
+                    color: "white"
+                    border.color: "gray"
+                    border.width: 1
+    
+                    TextField {
+                        id: repeatNewPasswordField
+                        placeholderText: "Repeat new password"
+                        anchors.fill: parent
+                        padding: 10
+                        font.pointSize: 18
+                        echoMode: TextInput.Password
+                        verticalAlignment: TextInput.AlignVCenter
+                    }
                 }
-            }
-
-            Button {
-                text: "Cancel"
-                Layout.alignment: Qt.AlignHCenter
-                onClicked: changePasswordDialog.close()
+    
+                Button {
+                    text: "Change Password"
+                    Layout.alignment: Qt.AlignHCenter
+                    onClicked: {
+                        python.on_change_password_button_click(
+                            currentPasswordField.text, 
+                            newPasswordField.text, 
+                            repeatNewPasswordField.text
+                        )
+                    }
+                }
+    
+                Button {
+                    text: "Cancel"
+                    Layout.alignment: Qt.AlignHCenter
+                    onClicked: changePasswordDialog.close()
+                }
             }
         }
     }
-}
 
 
   ListModel {
@@ -639,7 +635,6 @@ Dialog {
             spacing: 20  // Space between elements
             anchors.margins: 20  // Margins around the ColumnLayout
 
-            // Title
             Text {
                 text: "All the members"
                 font.pointSize: 24
@@ -738,122 +733,121 @@ Dialog {
             }
         }
     }
-}
+  }
 
-// Define a ListModel to hold the members
-ListModel {
-    id: membersModel
-}
-
-
-   Dialog {
-    id: editUserDialog
-    modal: true    
-    width: 400
-    height: 599
-    anchors.centerIn: parent
-
-    Rectangle {
-        id: overlay2
-        anchors.fill: parent
-        color: "white"
-        radius: 10
+    ListModel {
+        id: membersModel
     }
 
-    ColumnLayout {
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter: parent.verticalCenter
-        spacing: 10
 
-        Text {
-            id: editUserText
-            font.pointSize: 20
-            horizontalAlignment: Text.AlignHCenter
-        }
-
-        // Field for editing the member name
+  Dialog {
+        id: editUserDialog
+        modal: true    
+        width: 400
+        height: 599
+        anchors.centerIn: parent
+    
         Rectangle {
-            width: 300
-            height: 50
+            id: overlay2
+            anchors.fill: parent
             color: "white"
-            border.color: "gray"
-            border.width: 1
-
-            TextField {
-                id: editUserField
-                placeholderText: "New Name"
-                anchors.fill: parent
-                padding: 10
-                font.pointSize: 18
-                verticalAlignment: TextInput.AlignVCenter
-            }
+            radius: 10
         }
-
-        // Dropdown or switch to change status (e.g., In/Out or Access/No Access)
-        RowLayout {
+    
+        ColumnLayout {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
             spacing: 10
+    
             Text {
-                text: "Status:"
-                font.pointSize: 18
-                color: "black"
+                id: editUserText
+                font.pointSize: 20
+                horizontalAlignment: Text.AlignHCenter
             }
-            ComboBox {
-                id: statusComboBox
-                model: ["In", "Out"]  // You can use this to set the status
-                currentIndex: 0
-            }
-        }
-
-        // Save Button
-        Button {
-            text: "Save"
-            width: 100
-            height: 30
-            Layout.preferredWidth: 100
-            Layout.preferredHeight: 30
-            background: Rectangle {
-                radius: 10
+    
+            // Field for editing the member name
+            Rectangle {
+                width: 300
+                height: 50
+                color: "white"
                 border.color: "gray"
                 border.width: 1
+    
+                TextField {
+                    id: editUserField
+                    placeholderText: "New Name"
+                    anchors.fill: parent
+                    padding: 10
+                    font.pointSize: 18
+                    verticalAlignment: TextInput.AlignVCenter
+                }
             }
-            Layout.alignment: Qt.AlignHCenter
-
-            // Save logic
-            onClicked: {
-                // Get the new name and status
-                var newName = editUserField.text
-                var newStatus = statusComboBox.currentText
-
-                // Call Python functions to update member name and status
-                python.change_member(editUserDialog.userName, newName)
-                python.change_member_status(editUserDialog.userName, newStatus === "In")
-                
-                // Close the dialog
-                editUserDialog.close()
+    
+            // Dropdown or switch to change status (e.g., In/Out or Access/No Access)
+            RowLayout {
+                spacing: 10
+                Text {
+                    text: "Status:"
+                    font.pointSize: 18
+                    color: "black"
+                }
+                ComboBox {
+                    id: statusComboBox
+                    model: ["In", "Out"]  // You can use this to set the status
+                    currentIndex: 0
+                }
             }
-        }
-
-        // Cancel Button
-        Text {
-            id: cancelButton
-            text: "Cancel"
-            font.pointSize: 12
-            color: "black"
-            Layout.alignment: Qt.AlignHCenter
-            MouseArea {
-                anchors.fill: parent
+    
+            // Save Button
+            Button {
+                text: "Save"
+                width: 100
+                height: 30
+                Layout.preferredWidth: 100
+                Layout.preferredHeight: 30
+                background: Rectangle {
+                    radius: 10
+                    border.color: "gray"
+                    border.width: 1
+                }
+                Layout.alignment: Qt.AlignHCenter
+    
+                // Save logic
                 onClicked: {
+                    // Get the new name and status
+                    var newName = editUserField.text
+                    var newStatus = statusComboBox.currentText
+    
+                    // Call Python functions to update member name and status
+                    python.change_member(editUserDialog.userName, newName)
+                    python.change_member_status(editUserDialog.userName, newStatus === "In")
+                    
+                    // Close the dialog
                     editUserDialog.close()
                 }
             }
+    
+            // Cancel Button
+            Text {
+                id: cancelButton
+                text: "Cancel"
+                font.pointSize: 12
+                color: "black"
+                Layout.alignment: Qt.AlignHCenter
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        editUserDialog.close()
+                    }
+                }
+            }
         }
-    }
-
-    onOpened: {
-        editUserText.text = "Editing: " + editUserDialog.userName
-        editUserField.text = editUserDialog.userName
-    }
-}
+    
+        onOpened: {
+            editUserText.text = "Editing: " + editUserDialog.userName
+            editUserField.text = editUserDialog.userName
+        }
+  }
 
 
    Dialog {
@@ -934,7 +928,6 @@ ListModel {
               }
           }
    }
-   
    
 }
 """
