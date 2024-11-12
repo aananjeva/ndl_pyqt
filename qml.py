@@ -656,26 +656,23 @@ ApplicationWindow {
 
                     // Profile Icon
                     Image {
-                        source: "qtt"  // Replace with the actual icon source
+                        source: "/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/.venv/images/user.png"  
                         width: 24
                         height: 24
                     }
 
-                    // User Name
                     Text {
                         text: model.name
                         font.pointSize: 18
                         color: "black"
                     }
 
-                    // Status (In/Out)
                     Text {
                         text: model.status
                         font.pointSize: 18
-                        color: model.status === "In" ? "green" : "red"  // Color based on status
+                        color: model.status === "In" ? "green" : "red"  
                     }
 
-                    // Edit Button
                     Button {
                         text: "Edit"
                         onClicked: {
@@ -686,7 +683,6 @@ ApplicationWindow {
                 }
             }
 
-            // + Button to open the new user dialog
             RowLayout {
                 Layout.alignment: Qt.AlignLeft
                 Text {
@@ -696,7 +692,7 @@ ApplicationWindow {
                     color: "grey"
                     Layout.alignment: Qt.AlignLeft
                     MouseArea {
-                        anchors.fill: parent  // Make the MouseArea fill the entire text area
+                        anchors.fill: parent  
                         onClicked: newUserDialog.open()
                     }
                 }
@@ -738,7 +734,6 @@ ApplicationWindow {
     ListModel {
         id: membersModel
     }
-
 
   Dialog {
         id: editUserDialog
@@ -798,7 +793,6 @@ ApplicationWindow {
                 }
             }
     
-            // Save Button
             Button {
                 text: "Save"
                 width: 100
@@ -827,7 +821,6 @@ ApplicationWindow {
                 }
             }
     
-            // Cancel Button
             Text {
                 id: cancelButton
                 text: "Cancel"
