@@ -83,11 +83,36 @@ class UserCommands:
             response = msg.payload.decode()
 
             if response == "ok":
-                self.ui_reference.stack.setCurrentWidget(self.ui_reference.default_password_page)
+                self.ui_reference.stack.setCurrentWidget(self.ui_reference.defaultPasswordPage)
             else:
                 QMessageBox.information(None, "Error", "Please press the button again")
 
         self.mqtt_client.response_listener(topic_response, on_press_button_response)
+
+        # ------------------------------------------------------------------------------
+        def default_login(self, username, password):
+            topic_ask = "default_login_ask"
+            topic_response = "default_login_response"
+
+            hashed_password = self.hash_password(password)
+
+            default_login_data = {
+                "username": username,
+                "password": hashed_password
+            }
+
+            default_login_json = json.dumps(default_login_data)
+
+            self.mqtt_client.send_to_topic(topic_ask, default_login_json)
+
+            def on_default_login_response(client, userdata, msg):
+                response = msg.payload.decode()
+                if response == "ok":
+                    self.ui_reference.stack.setCurrentWidget(self.ui_reference.main_page)
+                else:
+                    QMessageBox.information(None, "Default Login Failed", "Please try again")
+
+            self.mqtt_client.response_listener(topic_response, on_default_login_response)
 
     #------------------------------------------------------------------------------
     def register(self, username, password, repeat_password, pictures):

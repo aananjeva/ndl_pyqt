@@ -152,6 +152,82 @@ ApplicationWindow {
   }
 
 
+  Component {
+    id: defaultPasswordPage
+    
+    Rectangle {
+        anchors.fill: parent
+        color: "white"
+        
+        ColumnLayout {
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 20
+            
+            Text {
+                  text: "Default Login"
+                  font.pointSize: 24
+                  font.bold: true
+                  color: "black"
+                  horizontalAlignment: Text.AlignHCenter
+            }
+    
+            Rectangle {
+                  width: 300
+                  height: 50
+                  color: "white"
+                  border.color: "gray"
+                  border.width: 1
+    
+                  TextField {
+                      id: defaultUsernameField
+                      placeholderText: "default username"
+                      anchors.fill: parent
+                      padding: 10
+                      font.pointSize: 18
+                      verticalAlignment: TextInput.AlignVCenter
+                  }
+            }
+            
+            Rectangle {
+                  width: 300
+                  height: 50
+                  color: "white"
+                  border.color: "gray"
+                  border.width: 1
+    
+                  TextField {
+                      id: defaultPasswordField
+                      placeholderText: "default password"
+                      anchors.fill: parent
+                      padding: 10
+                      font.pointSize: 18
+                      verticalAlignment: TextInput.AlignVCenter
+                  }
+            }
+            
+            Button {
+                text: "Enter"
+                width: 600
+                height: 300
+    
+                background: Rectangle {
+                    radius: 10
+                    border.color: "gray"
+                    border.width: 1
+                }
+
+                Layout.alignment: Qt.AlignHCenter
+                onClicked: {
+                    python.on_default_login_button_click(
+                        defaultUsernameField.text,
+                        defaultPasswordField.text
+                    )
+                }
+            }
+        }
+    }
+  }
 
   Component {
       id: registerPage
@@ -241,8 +317,8 @@ ApplicationWindow {
               }
               
               Button {
-                text: "Take Pictures"
-                
+                text: "+ add pictures"
+    
                 onClicked: {
                     python.open_camera_and_take_pictures()
                 }
@@ -283,7 +359,7 @@ ApplicationWindow {
         color: "white"
         
         Button {
-              text: "←"  // You can replace this with an icon if you prefer
+              text: "←"  
               font.pointSize: 20
               background: Rectangle {
                   color: "white"
@@ -325,11 +401,10 @@ ApplicationWindow {
                 text: "Take Pictures"
                 Layout.alignment: Qt.AlignHCenter
                 onClicked: {
-                    // Call the Python function to open the camera and take pictures
                     python.open_camera_and_take_pictures()
                 }
             }
-
+            
             Button {
                 text: "Done"
                 Layout.alignment: Qt.AlignHCenter
@@ -731,9 +806,9 @@ ApplicationWindow {
     }
   }
 
-    ListModel {
-        id: membersModel
-    }
+  ListModel {
+    id: membersModel
+  }
 
   Dialog {
         id: editUserDialog
@@ -806,17 +881,13 @@ ApplicationWindow {
                 }
                 Layout.alignment: Qt.AlignHCenter
     
-                // Save logic
                 onClicked: {
-                    // Get the new name and status
                     var newName = editUserField.text
                     var newStatus = statusComboBox.currentText
     
-                    // Call Python functions to update member name and status
                     python.change_member(editUserDialog.userName, newName)
                     python.change_member_status(editUserDialog.userName, newStatus === "In")
                     
-                    // Close the dialog
                     editUserDialog.close()
                 }
             }
