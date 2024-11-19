@@ -16,7 +16,8 @@ class UserCommands:
         self._current_user = None
         self._stored_password = None
         # main mqtt topics
-        self._topic_ask = "login_ask"
+        self._topic_ask_login = "login_ask"
+        self._topic_ask_reg = "register_ask"
 
         # Subscribe to all relevant topics
         self.mqtt_client.response_listener("mqtt_responses_cached", self.handle_login_response)
@@ -34,8 +35,8 @@ class UserCommands:
     def hash_password(cls, password):
         return hashlib.sha256(password.encode()).hexdigest()
 
-    def get_stored_password(self):
-        return self._stored_password_hash
+    # def get_stored_password(self):
+    #     return self._stored_password_hash
 
     def get_current_username(self):
         if self.current_user:
@@ -58,7 +59,7 @@ class UserCommands:
                 "password": hashed_password
             }
             login_json = json.dumps(login_data)
-            self._mqtt_client.send_message(login_json, self._topic_ask)
+            self._mqtt_client.send_message(login_json, self._topic_ask_login)
 
         except Exception as e:
             raise e
@@ -97,35 +98,11 @@ class UserCommands:
             except Exception as e:
                 raise e
 
-        # ------------------------------------------------------------------------------
-        # def default_login(self, username, password):
-        #     topic_ask = "default_login_ask"
-        #     topic_response = "default_login_response"
-        #
-        #     hashed_password = self.hash_password(password)
-        #
-        #     default_login_data = {
-        #         "username": username,
-        #         "password": hashed_password
-        #     }
-        #
-        #     default_login_json = json.dumps(default_login_data)
-        #
-        #     self.mqtt_client.send_to_topic(topic_ask, default_login_json)
-        #
-        #     def on_default_login_response(client, userdata, msg):
-        #         response = msg.payload.decode()
-        #         if response == "ok":
-        #             self.ui_reference.stack.setCurrentWidget(self.ui_reference.main_page)
-        #         else:
-        #             QMessageBox.information(None, "Default Login Failed", "Please try again")
-        #
-        #     self.mqtt_client.response_listener(topic_response, on_default_login_response)
+
 
     #------------------------------------------------------------------------------
     def register(self, username, password, repeat_password, pictures):
-        topic_ask = "register_ask"
-        topic_response = "register_response"
+        # topic_response = "register_response"
 
         try:
             if password == repeat_password:
@@ -154,25 +131,11 @@ class UserCommands:
 
             register_json = json.dumps(register_data)
 
-            self.mqtt_client.send_to_topic(topic_ask, register_json)
+            self._mqtt_client.send_message(register_json, self._topic_ask_reg)
 
         except Exception as e:
             raise e
 
-
-        def on_register_response(client, userdata, msg):
-            try:
-                response = msg.payload.decode()
-                if response == "ok":
-                    raise Exception("Registration successful")
-                    self.ui_reference.stack.setCurrentWidget(self.ui_reference.main_page)
-                else:
-                    raise Exception("Registration failed, please try again")
-
-                self.mqtt_client.response_listener(topic_response, on_register_response)
-
-            except Exception as e:
-                raise e
 
 #------------------------------------------------------------------------------
     def create_new_member(self, member_name, pictures):
