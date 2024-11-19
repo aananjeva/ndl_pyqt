@@ -219,10 +219,7 @@ ApplicationWindow {
 
                 Layout.alignment: Qt.AlignHCenter
                 onClicked: {
-                    python.on_default_login_button_click(
-                        defaultUsernameField.text,
-                        defaultPasswordField.text
-                    )
+                   stackView.push(mainPage)
                 }
             }
         }

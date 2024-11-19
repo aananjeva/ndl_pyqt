@@ -21,18 +21,25 @@ class UI(QWidget):
             self.active_users_list_widget.addItem(user)
 
     # ------------------------------------------------------------------------------
+    #QA do I need it?
     def update_all_users_list(self, all_users):
         self.all_users_list_widget.clear()
         for user in all_users:
             self.all_users_list_widget.addItem(user)
 
     # ------------------------------------------------------------------------------
+    #QA do I need it?
     def remove_member_from_list(self, member_name):
         for index in range(self.all_users_list_widget.count()):
             item = self.all_users_list_widget.item(index)
             if item.text() == member_name:
                 self.all_users_list_widget.takeItem(index)
                 break
+
+    # ------------------------------------------------------------------------------
+    def add_new_member_to_list(self, member_name):
+        self.all_users_list_widget.addItem(member_name)
+
 
     # ------------------------------------------------------------------------------
     def update_member_name_in_list(self, old_name, new_name):
@@ -50,3 +57,4 @@ class UI(QWidget):
                 status_text = "Access: Granted" if has_access else "Access: Revoked"
                 item.setText(f"{member_name} - {status_text}")
                 break
+

@@ -28,7 +28,7 @@ class User:
     def ssh(self):
         ssh_client = paramiko.SSHClient()
         ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh_client.connect(hostname='ndl@192.168.1.75', key_filename='/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/security/id_ed25519')
+        ssh_client.connect(hostname='ndl@192.168.1.75', key_filename='/resources/ssh_info/id_ed25519')
         print("SSH connection established successfully.")
 
     def to_json(self):

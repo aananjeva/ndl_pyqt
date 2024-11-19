@@ -2,20 +2,24 @@ import json
 
 import cv2
 from PySide6.QtCore import Slot
+from shiboken6.Shiboken import delete
 
-from mqtt import MQTTClient
+from mqtt import MQTTServer
 import hashlib
 import re
 from PySide6.QtWidgets import QMessageBox
 
 class UserCommands:
-    def __init__(self, mqtt_client, ui_reference):
-        self.mqtt_client = mqtt_client
-        self.ui_reference = ui_reference
-        self.current_user = None
+    def __init__(self, mqtt_client: MQTTServer, ui_reference):
+        self._mqtt_client = mqtt_client
+        self._ui_reference = ui_reference
+        self._current_user = None
+        self._stored_password = None
+        # main mqtt topics
+        self._topic_ask = "login_ask"
 
         # Subscribe to all relevant topics
-        self.mqtt_client.response_listener("login_response", self.handle_login_response)
+        self.mqtt_client.response_listener("mqtt_responses_cached", self.handle_login_response)
         self.mqtt_client.response_listener("press_button_response", self.handle_press_button_response)
         self.mqtt_client.response_listener("register_response", self.handle_register_response)
         self.mqtt_client.response_listener("lock_response", self.handle_lock_response)
@@ -26,7 +30,8 @@ class UserCommands:
         self.mqtt_client.response_listener("change_member_status_response", self.handle_change_member_status_response)
         self.mqtt_client.response_listener("new_member_response", self.handle_new_member_response)
 
-    def hash_password(self, password):
+    @classmethod
+    def hash_password(cls, password):
         return hashlib.sha256(password.encode()).hexdigest()
 
     def get_stored_password(self):
@@ -41,28 +46,22 @@ class UserCommands:
 
 # ------------------------------------------------------------------------------
     def login(self, username, password):
-        topic_ask = "login_ask"
-        topic_response = "login_response"
+        # topic_response = "mqtt_responses_cached"
+        try:
+            if not username or not password:
+                raise Exception("Username and password cannot be empty")
 
-        hashed_password = self.hash_password(password)
+            hashed_password = self.hash_password(password)
+            self._stored_password = hashed_password
+            login_data = {
+                "username": username,
+                "password": hashed_password
+            }
+            login_json = json.dumps(login_data)
+            self._mqtt_client.send_message(login_json, self._topic_ask)
 
-        login_data = {
-            "username": username,
-            "password": hashed_password
-        }
-
-        login_json = json.dumps(login_data)
-
-        self.mqtt_client.send_to_topic(topic_ask, login_json)
-
-        def on_login_response(client, userdata, msg):
-            response = msg.payload.decode()
-            if response == "ok":
-                self.ui_reference.stack.setCurrentWidget(self.ui_reference.main_page)
-            else:
-                QMessageBox.information(None, "Login Failed", "Please try again")
-
-        self.mqtt_client.response_listener(topic_response, on_login_response)
+        except Exception as e:
+            raise e
 
     # ------------------------------------------------------------------------------
 
@@ -70,92 +69,110 @@ class UserCommands:
         topic_ask = "press_button_ask"
         topic_response = "press_button_response"
 
-        press_button_data = {
-            "command": "press_button_ask"
-        }
+        try:
 
-        press_button_json = json.dumps(press_button_data)
-        self.mqtt_client.send_to_topic(topic_ask, press_button_json)
-
-        QMessageBox.information(None, "Forgot Password", "Please press the button on the lock manually.")
-
-        def on_press_button_response(client, userdata, msg):
-            response = msg.payload.decode()
-
-            if response == "ok":
-                self.ui_reference.stack.setCurrentWidget(self.ui_reference.defaultPasswordPage)
-            else:
-                QMessageBox.information(None, "Error", "Please press the button again")
-
-        self.mqtt_client.response_listener(topic_response, on_press_button_response)
-
-        # ------------------------------------------------------------------------------
-        def default_login(self, username, password):
-            topic_ask = "default_login_ask"
-            topic_response = "default_login_response"
-
-            hashed_password = self.hash_password(password)
-
-            default_login_data = {
-                "username": username,
-                "password": hashed_password
+            press_button_data = {
+                "command": "press_button_ask"
             }
 
-            default_login_json = json.dumps(default_login_data)
+            press_button_json = json.dumps(press_button_data)
+            self._mqtt_client.send_to_topic(topic_ask, press_button_json)
 
-            self.mqtt_client.send_to_topic(topic_ask, default_login_json)
+            QMessageBox.information(None, "Forgot Password", "Please press the button on the lock manually.")
 
-            def on_default_login_response(client, userdata, msg):
+        except Exception as e:
+            raise e
+
+        def on_press_button_response(client, userdata, msg):
+            try:
                 response = msg.payload.decode()
-                if response == "ok":
-                    self.ui_reference.stack.setCurrentWidget(self.ui_reference.main_page)
-                else:
-                    QMessageBox.information(None, "Default Login Failed", "Please try again")
 
-            self.mqtt_client.response_listener(topic_response, on_default_login_response)
+                if response == "ok":
+                    self.ui_reference.stack.setCurrentWidget(self.ui_reference.defaultPasswordPage)
+                else:
+                    raise Exception("Please press the button again")
+
+                self.mqtt_client.response_listener(topic_response, on_press_button_response)
+
+            except Exception as e:
+                raise e
+
+        # ------------------------------------------------------------------------------
+        # def default_login(self, username, password):
+        #     topic_ask = "default_login_ask"
+        #     topic_response = "default_login_response"
+        #
+        #     hashed_password = self.hash_password(password)
+        #
+        #     default_login_data = {
+        #         "username": username,
+        #         "password": hashed_password
+        #     }
+        #
+        #     default_login_json = json.dumps(default_login_data)
+        #
+        #     self.mqtt_client.send_to_topic(topic_ask, default_login_json)
+        #
+        #     def on_default_login_response(client, userdata, msg):
+        #         response = msg.payload.decode()
+        #         if response == "ok":
+        #             self.ui_reference.stack.setCurrentWidget(self.ui_reference.main_page)
+        #         else:
+        #             QMessageBox.information(None, "Default Login Failed", "Please try again")
+        #
+        #     self.mqtt_client.response_listener(topic_response, on_default_login_response)
 
     #------------------------------------------------------------------------------
     def register(self, username, password, repeat_password, pictures):
         topic_ask = "register_ask"
         topic_response = "register_response"
 
-        if len(password) < 8:
-            QMessageBox.information(None, "Error", "Password must be at least 8 characters")
-            return
+        try:
+            if password == repeat_password:
+                raise Exception("Passwords do not match")
 
-        if not re.search(r'[A-Z]', password):
-            QMessageBox.information(None, "Error", "Password must contain at least one capital letter")
-            return
+            if len(password) < 8:
+                raise Exception("Password must be at least 8 characters")
 
-        if "ndl" not in password:
-            QMessageBox.information(None, "Error", 'Password must contain the substring "ndl"')
-            return
+            if not re.search(r'[A-Z]', password):
+                raise Exception("Password must contain at least one uppercase letter")
 
-        if len(pictures) != 6:
-            QMessageBox.information(None, "Error", "Exactly 6 pictures are required")
-            return
+            if "ndl" not in password:
+                raise Exception("Password must contain the substring ndl")
 
-        hashed_password = self.hash_password(password)
 
-        register_data = {
-            "username": username,
-            "password": hashed_password,
-            "pictures": pictures
-        }
+            if len(pictures) != 6:
+                raise Exception("Pictures must contain 6 images")
 
-        register_json = json.dumps(register_data)
+            hashed_password = self.hash_password(password)
 
-        self.mqtt_client.send_to_topic(topic_ask, register_json)
+            register_data = {
+                "username": username,
+                "password": hashed_password,
+                "pictures": pictures
+            }
+
+            register_json = json.dumps(register_data)
+
+            self.mqtt_client.send_to_topic(topic_ask, register_json)
+
+        except Exception as e:
+            raise e
+
 
         def on_register_response(client, userdata, msg):
-            response = msg.payload.decode()
-            if response == "ok":
-                QMessageBox.information(None, "Success", "Registration successful")
-                self.ui_reference.stack.setCurrentWidget(self.ui_reference.main_page)
-            else:
-                QMessageBox.information(None, "Registration Failed", "Registration failed")
+            try:
+                response = msg.payload.decode()
+                if response == "ok":
+                    raise Exception("Registration successful")
+                    self.ui_reference.stack.setCurrentWidget(self.ui_reference.main_page)
+                else:
+                    raise Exception("Registration failed, please try again")
 
-        self.mqtt_client.response_listener(topic_response, on_register_response)
+                self.mqtt_client.response_listener(topic_response, on_register_response)
+
+            except Exception as e:
+                raise e
 
 #------------------------------------------------------------------------------
     def create_new_member(self, member_name, pictures):
@@ -163,18 +180,22 @@ class UserCommands:
         topic_ask = "new_member_ask"
         topic_response = "new_member_response"
 
-        if len(pictures) != 6:
-            QMessageBox.information(None, "Error", "Exactly 6 pictures are required")
-            return
+        try:
 
-        member_data = {
-            "Name": member_name,
-            "Pictures": pictures,
-            "Command": "create_member"
-        }
+            if len(pictures) != 6:
+                raise Exception("Exactly 6 pictures required")
 
-        member_json = json.dumps(member_data)
-        self.mqtt_client.send_to_topic(topic_ask, member_json)
+            member_data = {
+                "Name": member_name,
+                "Pictures": pictures,
+                "Command": "create_member"
+            }
+
+            member_json = json.dumps(member_data)
+            self.mqtt_client.send_to_topic(topic_ask, member_json)
+
+        except Exception as e:
+            raise e
 
         def on_new_member_response(client, userdata, msg):
             response = msg.payload.decode()
@@ -192,38 +213,36 @@ class UserCommands:
         topic_ask = "change_password_ask"
         topic_response = "change_password_response"
 
-        hashed_old_password = self.hash_password(old_password)
+        try:
 
-        if self.hash_password(old_password) != self.get_stored_password():
-            QMessageBox.information(None, "Error", "Old password is incorrect")
-            return
+            hashed_old_password = self.hash_password(old_password)
 
-        if len(new_password) < 8:
-            QMessageBox.information(None, "Error", "Password must be at least 8 characters")
-            return
+            if self.hash_password(old_password) != self.get_stored_password():
+                raise Exception("Old password is incorrect")
 
-        if not re.search(r'[A-Z]', new_password):
-            QMessageBox.information(None, "Error", "Password must contain at least one capital letter")
-            return
+            if len(new_password) < 8:
+                raise Exception("Password should be at least 8 characters")
 
-        if "ndl" not in new_password:
-            QMessageBox.information(None, "Error", 'Password must contain the substring "ndl"')
-            return
+            if not re.search(r'[A-Z]', new_password):
+                raise Exception("Password must contain at least one uppercase letter")
 
-        if len(new_password) != 6:
-            print("Exactly 6 pictures are required")
-            return
+            if "ndl" not in new_password:
+                raise Exception("Password must contain the substring ndl")
 
-        hashed_new_password = self.hash_password(new_password)
 
-        new_password_data = {
-            "username": username,
-            "password": hashed_new_password
-        }
+            hashed_new_password = self.hash_password(new_password)
 
-        new_password_json = json.dumps(new_password_data)
+            new_password_data = {
+                "username": username,
+                "password": hashed_new_password
+            }
 
-        self.mqtt_client.send_to_topic(topic_ask, new_password_json)
+            new_password_json = json.dumps(new_password_data)
+
+            self.mqtt_client.send_to_topic(topic_ask, new_password_json)
+
+        except Exception as e:
+            raise e
 
         def on_new_password_response(client, userdata, msg):
             response = msg.payload.decode()
@@ -343,8 +362,12 @@ class UserCommands:
         self.mqtt_client.response_listener(topic_response, on_delete_response)
 
     #------------------------------------------------------------------------------
-    @Slot(str, str)
-    def change_member(self, member_name, new_member_name):
+    # I need to combine two functions below, so that if the string is empty we change the status,
+    # and if the string is not empty we change the name
+
+    @Slot(str, str, bool)
+    def change_member(self, member_name, new_member_name, member_status):
+      if new_member_name.strip():
         topic_ask = "change_member_ask"
         topic_response = "change_member_response"
 
@@ -365,44 +388,37 @@ class UserCommands:
                 QMessageBox.information(None, "Error", "The name was not changed.")
 
         self.mqtt_client.response_listener(topic_response, on_change_member_response)
+      else:
+          topic_ask = "change_member_status_ask"
+          topic_response = "change_member_status_response"
 
-    #------------------------------------------------------------------------------
-    @Slot(str, bool)
-    def change_member_status(self, member_name, member_status):
-        topic_ask = "change_member_status_ask"
-        topic_response = "change_member_status_response"
+          change_data = {
+              "name": member_name,
+              "member_status": member_status
+          }
 
-        change_data = {
-            "name": member_name,
-            "member_status": member_status
-        }
+          change_json = json.dumps(change_data)
+          self.member_name = member_name
+          self.member_has_access = member_status
 
-        change_json = json.dumps(change_data)
+          self.mqtt_client.send_to_topic(topic_ask, change_json)
 
-        self.member_name = member_name
-        self.member_has_access = member_status
+          def on_change_member_status_response(client, userdata, msg):
+              response = msg.payload.decode()
+              if response == "ok":
+                  if self.member_has_access:
+                      QMessageBox.information(None, "Success", "The member cannot unlock the door.")
+                      self.ui_reference.update_member_status(self.member_name, False)
+                  else:
+                      QMessageBox.information(None, "Success", "The member now can unlock the door.")
+                      self.ui_reference.update_member_status(self.member_name, True)
+              else:
+                  if self.member_has_access:
+                      QMessageBox.information(None, "Error", "The member can still unlock the door.")
+                  else:
+                      QMessageBox.information(None, "Error", "The member still cannot unlock the door.")
 
-        self.mqtt_client.send_to_topic(topic_ask, change_json)
-
-        def on_change_member_status_response(client, userdata, msg):
-            response = msg.payload.decode()
-            if response == "ok":
-                if self.member_has_access:
-                    QMessageBox.information(None, "Success", "The member cannot unlock the door.")
-                    self.ui_reference.update_member_status(self.member_name, False)
-                else:
-                    QMessageBox.information(None, "Success", "The member now can unlock the door.")
-                    self.ui_reference.update_member_status(self.member_name, True)
-
-            else:
-                if self.member_has_access:
-                    # If the member had access and the response is "fail", access remains
-                    QMessageBox.information(None, "Error", "The member can still unlock the door.")
-                else:
-                    # If the member didn't have access and the response is "fail", access is not granted
-                    QMessageBox.information(None, "Error", "The member still cannot unlock the door.")
-
-        self.mqtt_client.response_listener(topic_response, on_change_member_status_response)
+          self.mqtt_client.response_listener(topic_response, on_change_member_status_response)
 
     #------------------------------------------------------------------------------
 
