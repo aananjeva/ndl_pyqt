@@ -57,3 +57,10 @@ class MyWidget(QtWidgets.QWidget):
         except Exception as e:
             raise e
 
+    def register(self):
+        pass
+
+    def forgot_password(self):
+        pass
+
+    # TODO: to check the functions

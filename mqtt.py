@@ -22,6 +22,7 @@ class MQTTServer:
         self._client.subscribe("mqtt_responses_cached")
         self._client.subscribe("magnetic_lock")
 
+    # TODO: how do I handle it?
 
     @classmethod
     def _on_message(cls, client, userdata, msg):
