@@ -63,4 +63,18 @@ class MyWidget(QtWidgets.QWidget):
     def forgot_password(self):
         pass
 
+    def new_member(self):
+        pass
+
+    def edit_member(self):
+        pass
+
+    def delete_member(self):
+        pass
+
+    def list_all_members(self):
+        pass
+
+    def list_active_members(self):
+        pass
     # TODO: to check the functions

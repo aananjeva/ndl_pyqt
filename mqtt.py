@@ -2,6 +2,12 @@ import paho.mqtt.client as mqtt
 import time
 import threading
 
+from user_commands.delete_member_response import on_delete_member_response
+from user_commands.edit_member_response import on_edit_member_response
+from user_commands.forgot_password_response import on_forgot_password_response
+from user_commands.list_all_members_response import on_list_all_members_response
+from user_commands.new_member_response import on_new_member_response
+from user_commands.register_response import on_register_response
 from util.endpoints import Endpoints
 from user_commands.login_response import on_login_response
 
@@ -30,10 +36,33 @@ class MQTTServer:
             match msg.topic:
                 case "mqtt_responses_cached":
                     payload = msg.payload.decode()
+                    # TODO these part
                     if on_login_response(payload):
                         # include logging a.k. program logs
                         pass
                     print(payload)
+                # case "forgot_password_response":
+                #     if on_forgot_password_response(payload):
+                #         pass
+                # case "register_response":
+                #     if on_register_response(payload):
+                #         pass
+                # case "new_member_response":
+                #     if on_new_member_response(payload):
+                #         pass
+                # case "edit_member_response":
+                #     if on_edit_member_response(payload):
+                #         pass
+                # case "delete_member_response":
+                #     if on_delete_member_response(payload):
+                #         pass
+                # case "all_members_response":
+                #     if on_list_all_members_response(payload):
+                #         pass
+                # case "all_members_response":
+                #     if on_list_all_members_response(payload):
+                #         pass
+
                 case "magnetic_lock":
                     payload = msg.payload.decode()
                     print(payload)
