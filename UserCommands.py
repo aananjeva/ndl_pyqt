@@ -1,5 +1,5 @@
 import json
-
+from util.program_codes import ResetPassword
 import cv2
 from PySide6.QtCore import Slot
 from shiboken6.Shiboken import delete
@@ -57,16 +57,10 @@ class UserCommands:
             raise e
 
     # ------------------------------------------------------------------------------
-    #TODO: do I need to json the command or can I just send it?
 
     def forgot_password(self):
         try:
-            press_button_data = {
-                "command": "press_button_ask"
-            }
-            press_button_json = json.dumps(press_button_data)
-            self._mqtt_client.send_message(press_button_json, self._topic_ask_press_button)
-
+            self._mqtt_client.send_message(ResetPassword.RESET, self._topic_ask_press_button)
         except Exception as e:
             raise e
 
@@ -158,8 +152,7 @@ class UserCommands:
             raise e
 
     #------------------------------------------------------------------------------
-    #TODO: should I do the same for forgor password?
-
+    #TODO how?
     def lock_unlock(self, current_state):
         try:
             self.intended_state = current_state
@@ -173,7 +166,7 @@ class UserCommands:
 
     def active_members(self):
         try:
-            self._mqtt_client.send_message(json.dumps({"command": "active_users_ask"}), self._topic_ask_active_members)
+            self._mqtt_client.send_message("list_active", self._topic_ask_active_members)
         except Exception as e:
             raise e
 
@@ -181,7 +174,7 @@ class UserCommands:
 
     def all_members(self):
         try:
-            self._mqtt_client.send_message(json.dumps({"command": "all_members_ask"}), self._topic_ask_all_members)
+            self._mqtt_client.send_message("list_all", self._topic_ask_all_members)
 
         except Exception as e:
             raise e

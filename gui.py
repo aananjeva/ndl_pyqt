@@ -28,16 +28,18 @@ class MyWidget(QtWidgets.QWidget):
 
     def login(self):
         # read the input fields
-        username = self.username_input.text()
-        password = self.password_input.text()
+        username = self.usernameField.text()
+        password = self.passwordField.text()
 
         # call login from UserCommands
-        self.login(username, password)
+        try:
+            self.login(username, password)
+        except Exception as e:
+            self.message_label.setText(f"Error initiating login: {str(e)}")
+            return
 
         # sleep(5) "Please wait"
-        self.message_label.setText("Please wait...")
-        QtWidgets.QApplication.processEvents()
-
+        self.message_label.setText("Please wait:)")
         time.sleep(5)
 
         # check the login response using csv file and convert it to enum using string_to_enum
@@ -48,17 +50,35 @@ class MyWidget(QtWidgets.QWidget):
 
                 if login_code == LoginResponseCodes.OK:
                     self.message_label.setText("Login successful!")
-                    # hoooooooow
                     self.stack_view.push("mainPage")
                 elif login_code == LoginResponseCodes.FAILED:
                     self.message_label.setText("Login failed!")
                 else:
                     self.message_label.setText("Please try again")
+
         except Exception as e:
             raise e
 
     def register(self):
-        pass
+        # read the input fields
+        username = self.registerUsernameField.text()
+        password = self.registerPasswordField.text()
+        repeat_password = self.repeatPasswordField.text()
+
+        # call register from UserCommands
+        try:
+            self.register(username, password, repeat_password)
+        except Exception as e:
+            self.message_label.setText(f"Error initiating register: {str(e)}")
+            return
+
+        # sleep(5) "Please wait"
+        self.message_label.setText("Please wait:)")
+        time.sleep(5)
+
+        # check the login response using csv file and convert it to enum using string_to_enum
+
+
 
     def forgot_password(self):
         pass

@@ -27,6 +27,7 @@ class MQTTServer:
         # subscribe to the topic I need to listen to
         self._client.subscribe("mqtt_responses_cached")
         self._client.subscribe("magnetic_lock")
+        self._client.subscribe("login_response")
 
     # TODO: how do I handle it?
 
@@ -41,29 +42,31 @@ class MQTTServer:
                         # include logging a.k. program logs
                         pass
                     print(payload)
-                # case "forgot_password_response":
-                #     if on_forgot_password_response(payload):
-                #         pass
-                # case "register_response":
-                #     if on_register_response(payload):
-                #         pass
-                # case "new_member_response":
-                #     if on_new_member_response(payload):
-                #         pass
-                # case "edit_member_response":
-                #     if on_edit_member_response(payload):
-                #         pass
-                # case "delete_member_response":
-                #     if on_delete_member_response(payload):
-                #         pass
-                # case "all_members_response":
-                #     if on_list_all_members_response(payload):
-                #         pass
-                # case "all_members_response":
-                #     if on_list_all_members_response(payload):
-                #         pass
-
+                case "forgot_password_response":
+                    payload = msg.payload.decode()
+                    print(payload)
+                case "register_response":
+                    payload = msg.payload.decode()
+                    print(payload)
+                case "new_member_response":
+                    payload = msg.payload.decode()
+                    print(payload)
+                case "edit_member_response":
+                    payload = msg.payload.decode()
+                    print(payload)
+                case "delete_member_response":
+                    payload = msg.payload.decode()
+                    print(payload)
+                case "all_members_response":
+                    payload = msg.payload.decode()
+                    print(payload)
+                case "all_members_response":
+                    payload = msg.payload.decode()
+                    print(payload)
                 case "magnetic_lock":
+                    payload = msg.payload.decode()
+                    print(payload)
+                case "login_response":
                     payload = msg.payload.decode()
                     print(payload)
                 case _:
@@ -84,11 +87,10 @@ class MQTTServer:
 
     def _run(self):
         self._mqtt_loop()
-        try:
-            while True:
-                time.sleep(0.7)
-        except KeyboardInterrupt:
-            print("Publisher stopped")
+        while True:
+            continue
+
+    def stop_mqtt(self):
         self._client.loop_stop()
         self._client.disconnect()
 
