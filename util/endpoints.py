@@ -4,5 +4,5 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class Endpoints:
     # MQTT
-    MQTT_USERNAME = "app"
+    MQTT_USERNAME = "server"
     MQTT_PASSWORD = "ndl@group3"
