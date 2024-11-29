@@ -1,12 +1,17 @@
 import json
+import sys
+
 import mqtt as mqtt
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QMessageBox, QApplication, QWidget
+from PySide6 import QtWidgets
+from PySide6.QtGui import QGuiApplication
+from PySide6.QtQml import QQmlApplicationEngine
 
 from UserCommands import UserCommands
 from data_operations import data
 from data_operations.data import FileTransfer
 from mqtt import MQTTServer
-
+from gui import GuiBackend
 
 class SmartLockSystem:
     BROKER_ADDRESS = "localhost"  # Change this to your broker address
@@ -19,57 +24,6 @@ class SmartLockSystem:
         self.client.run()
         self.user_commands = UserCommands(self.client)
 
-#---------------------------------------------------------------------
-# Handle functions to process incoming requests, perform specific actions
-# and send appropriate responses back to the system
-
-    def handle_lock(self, payload):
-        try:
-            lock_data = json.loads(payload)
-            command = lock_data.get("Command")
-
-            if command == "lock":
-                self.lock_door()  # Implement this method to lock the door
-                response = {"status": "success", "message": "Door locked"}
-            elif command == "unlock":
-                self.unlock_door()  # Implement this method to unlock the door
-                response = {"status": "success", "message": "Door unlocked"}
-            else:
-                response = {"status": "failure", "message": "Invalid command"}
-
-                # Publish the response to the status topic
-            self.client.publish(self.STATUS_TOPIC, json.dumps(response))
-
-        except Exception as e:
-            print(f"Error handling lock command: {e}")
-
-    def handle_status_update(self, payload):
-        try:
-            # Implement your logic to gather the current status of the system
-            status = self.get_system_status()  # This method should return the system status
-            response = {"status": "success", "system_status": status}
-
-            # Publish the response to the status topic
-            self.client.publish(self.STATUS_TOPIC, json.dumps(response))
-        except Exception as e:
-            print(f"Error handling status update: {e}")
-
-    def handle_user_update(self, payload):
-        try:
-            user_data = json.loads(payload)
-            username = user_data.get("Username")
-            new_username = user_data.get("NewUsername")
-
-            # Implement your logic to update user information
-            if self.update_user(username, new_username):
-                response = {"status": "success", "message": "User updated successfully"}
-            else:
-                response = {"status": "failure", "message": "Failed to update user"}
-
-            # Publish the response to the status topic
-            self.client.publish(self.STATUS_TOPIC, json.dumps(response))
-        except Exception as e:
-            print(f"Error handling user update: {e}")
 
 
 # ---------------------------------------------------------------------
@@ -119,12 +73,41 @@ if __name__ == "__main__":
     # except KeyboardInterrupt:
     #     print("Exiting...")
     #     smart_lock_system.client.loop_stop()
-    #
-    mqtt = MQTTServer()
-    mqtt.run()
-    user_data = {"username":"root", "password":"1a6719fc847f299114cc00a430549c272fa8cab7aa8ae3e55d9c6f84c62ba102"}
-    mqtt.send_message(json.dumps(user_data), "login")
 
+
+    # ---------------------------------------------------------------------------------------------------
+
+    # trying to run the app
+    # Create the QApplication instance
+    # Initialize the MQTT server
+    mqtt_server = MQTTServer()
+    mqtt_server.run()  # Start the MQTT server
+    # Initialize UserCommands with the MQTT server
+    gui = GuiBackend(mqtt_server)
+
+    app = QGuiApplication(sys.argv)
+    engine = QQmlApplicationEngine()
+    engine.addImportPath(sys.path[0])
+    engine.rootContext().setContextProperty("python", gui)  # Expose `MyWidget` to QML
+    engine.loadFromModule("Main", "Main")
+    # engine.load("/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/Main/Main.qml")
+    if not engine.rootObjects():
+        sys.exit(-1)
+    exit_code = app.exec()
+
+    del engine
+    sys.exit(exit_code)
+
+
+    # ---------------------------------------------------------------------------------------------------
+
+    #test for login
+    # mqtt = MQTTServer()
+    # mqtt.run()
+    # user_data = {"username":"root", "password":"1a6719fc847f299114cc00a430549c272fa8cab7aa8ae3e55d9c6f84c62ba102"}
+    # mqtt.send_message(json.dumps(user_data), "login")
+
+    # ---------------------------------------------------------------------------------------------------
 
     # #test for file transfer
     # file_tr = FileTransfer(name="test", surname="test2", file_path="/Users/anastasiaananyeva/Downloads/pics/austin-curtis-YVY61lIO_gw-unsplash.jpg")
@@ -132,7 +115,6 @@ if __name__ == "__main__":
     # if value:
     #     print(value)
 
-    #test for login data
 
 
 

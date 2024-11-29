@@ -4,42 +4,34 @@ import csv
 import time
 
 from PySide6 import QtWidgets
+from PySide6.QtCore import QObject, Slot
+
+from mqtt import MQTTServer
 from program_codes.login_response_codes import LoginResponseCodes
 from PySide6 import QtCore, QtWidgets
 
+from program_codes.new_member_response_codes import NewMemberResponseCodes
+from program_codes.register_response_codes import RegisterResponseCodes
+from UserCommands import UserCommands
 
 
-class MyWidget(QtWidgets.QWidget):
-    def __init__(self):
+class GuiBackend(QObject):
+    def __init__(self, mqtt: MQTTServer):
         super().__init__()
-        # self.stack_view = stack_view
-        # self.user_commands = user_commands
-        self.username_input = QtWidgets.QLineEdit()
-        self.password_input = QtWidgets.QLineEdit()
-        self.password_input.setEchoMode(QtWidgets.QLineEdit.Password)
-        self.message_label = QtWidgets.QLabel()
+        self._user_commands = UserCommands(mqtt)
 
-        self.layout = QtWidgets.QVBoxLayout(self)
-        self.layout.addWidget(QtWidgets.QLabel("Username"))
-        self.layout.addWidget(self.username_input)
-        self.layout.addWidget(QtWidgets.QLabel("Password"))
-        self.layout.addWidget(self.password_input)
-        self.layout.addWidget(self.message_label)
 
-    def login(self):
-        # read the input fields
-        username = self.usernameField.text()
-        password = self.passwordField.text()
-
+    @Slot(str, str)
+    def login(self, username, password):
         # call login from UserCommands
         try:
-            self.login(username, password)
+            self._user_commands.login(username, password)
         except Exception as e:
-            self.message_label.setText(f"Error initiating login: {str(e)}")
+            print(f"Error initiating login: {str(e)}")
             return
 
         # sleep(5) "Please wait"
-        self.message_label.setText("Please wait:)")
+        # self.message_label.setText("Please wait:)")
         time.sleep(5)
 
         # check the login response using csv file and convert it to enum using string_to_enum
@@ -49,15 +41,17 @@ class MyWidget(QtWidgets.QWidget):
                 login_code = LoginResponseCodes.string_to_enum(response)
 
                 if login_code == LoginResponseCodes.OK:
-                    self.message_label.setText("Login successful!")
-                    self.stack_view.push("mainPage")
+                    print("Login successful!")
+                    # self.stack_view.push("mainPage")
                 elif login_code == LoginResponseCodes.FAILED:
-                    self.message_label.setText("Login failed!")
+                    print("Login failed!")
                 else:
-                    self.message_label.setText("Please try again")
+                    print("Please try again!")
+
 
         except Exception as e:
             raise e
+
 
     def register(self):
         # read the input fields
@@ -67,7 +61,7 @@ class MyWidget(QtWidgets.QWidget):
 
         # call register from UserCommands
         try:
-            self.register(username, password, repeat_password)
+            self._user_commands.register(username, password, repeat_password)
         except Exception as e:
             self.message_label.setText(f"Error initiating register: {str(e)}")
             return
@@ -76,15 +70,56 @@ class MyWidget(QtWidgets.QWidget):
         self.message_label.setText("Please wait:)")
         time.sleep(5)
 
-        # check the login response using csv file and convert it to enum using string_to_enum
+        # check the register response using csv file and convert it to enum using string_to_enum
+        try:
+            with open("../mqtt_responses_cached/register_authorized.csv", "r") as file:
+                response = file.read().strip()
+                register_code = RegisterResponseCodes.string_to_enum(response)
 
+                if register_code == RegisterResponseCodes.OK:
+                    self.message_label.setText("Register successful!")
+                    self.stack_view.push("mainPage")
+                elif register_code == RegisterResponseCodes.FAILED:
+                    self.message_label.setText("Register failed!")
+                else:
+                    self.message_label.setText("Please try again")
+
+        except Exception as e:
+            raise e
 
 
     def forgot_password(self):
         pass
 
     def new_member(self):
-        pass
+        name = self.newUsernameField.text()
+        pics = self.picturesArray
+
+        try:
+            self.new_member(name, pics)
+        except Exception as e:
+            self.message_label.setText(f"Error creating a new member")
+            return
+
+        self.message_label.setText("Please wait:)")
+        time.sleep(5)
+
+        try:
+            with open("../mqtt_responses_cached/new_member_authorized.csv", "r") as file:
+                response = file.read().strip()
+                new_member_code = NewMemberResponseCodes.string_to_enum(response)
+
+                if new_member_code == NewMemberResponseCodes.OK:
+                    self.message_label.setText("New member was created!")
+                    # I need to update the list here???
+                elif new_member_code == NewMemberResponseCodes.FAILED:
+                    self.message_label.setText("Failed to create a new member")
+                else:
+                    self.message_label.setText("Please try again")
+
+        except Exception as e:
+            raise e
+
 
     def edit_member(self):
         pass

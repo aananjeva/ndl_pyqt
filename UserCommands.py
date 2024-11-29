@@ -10,9 +10,8 @@ import re
 from PySide6.QtWidgets import QMessageBox
 
 class UserCommands:
-    def __init__(self, mqtt_client: MQTTServer, ui_reference):
+    def __init__(self, mqtt_client: MQTTServer):
         self._mqtt_client = mqtt_client
-        self._ui_reference = ui_reference
         self._current_user = None
         self._stored_password = None
         # main mqtt topics
