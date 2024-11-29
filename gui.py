@@ -1,10 +1,15 @@
+import os
+import sys
 import time
+import subprocess
+from shutil import move
 
 from PySide6.QtCore import QObject, Slot, QTimer
+from PySide6.QtMultimedia import QCamera, QMediaCaptureSession, QImageCapture
 from PySide6.QtWidgets import QMessageBox
 from mqtt import MQTTServer
 from program_codes.login_response_codes import LoginResponseCodes
-
+from PySide6.QtMultimedia import QCamera
 from program_codes.new_member_response_codes import NewMemberResponseCodes
 from program_codes.register_response_codes import RegisterResponseCodes
 from UserCommands import UserCommands
@@ -14,9 +19,59 @@ class GuiBackend(QObject):
     def __init__(self, mqtt: MQTTServer):
         super().__init__()
         self._user_commands = UserCommands(mqtt)
-        # self.engine = engine
-        # root_object = self.engine.rootObjects()[0]
-        # self.stackView = root_object.findChild(QObject, "stackView")
+        self._picture_count = 0
+        self.pictures_dir = "/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/images"
+
+        if not os.path.exists(self.pictures_dir):
+            os.makedirs(self.pictures_dir)
+
+
+    @Slot()
+    def open_device_camera(self):
+        """Open the device's default camera application."""
+        try:
+            if sys.platform == "darwin":  # macOS
+                subprocess.run(["open", "-a", "Photo Booth"])  # Replace with your default camera app
+            elif sys.platform == "win32":  # Windows
+                subprocess.run(["start", "microsoft.windows.camera:"], shell=True)
+            elif sys.platform.startswith("linux"):  # Linux
+                subprocess.run(["cheese"])  # Cheese is a common Linux camera app
+            else:
+                QMessageBox.critical(None, "Error", "Unsupported platform")
+        except Exception as e:
+            QMessageBox.critical(None, "Error", f"Failed to open camera: {e}")
+
+    @Slot()
+    def move_pictures_to_app_folder(self):
+        pictures = [
+            f for f in os.listdir(self.default_camera_dir)
+            if f.endswith((".jpg", ".png")) and not f.startswith(".")
+        ]
+        pictures = sorted(pictures, key=lambda x: os.path.getctime(os.path.join(self.default_camera_dir, x)))
+
+        for i, picture in enumerate(pictures[:6]):  # Only take the latest 6 pictures
+            source_path = os.path.join(self.default_camera_dir, picture)
+            target_path = os.path.join(self.pictures_dir, f"picture_{i + 1}.jpg")
+            move(source_path, target_path)
+            print(f"Moved: {source_path} -> {target_path}")
+
+        self._picture_count = len(pictures[:6])
+        if self._picture_count < 6:
+            QMessageBox.warning(None, "Incomplete", f"Only {self._picture_count}/6 pictures were found.")
+        else:
+            QMessageBox.information(None, "Success", "All 6 pictures have been moved to the app folder!")
+
+    @Slot()
+    def check_picture_completion(self):
+        """Ensure 6 pictures are available in the app's folder."""
+        pictures = [
+            f for f in os.listdir(self.pictures_dir) if f.endswith((".jpg", ".png")) and not f.startswith(".")
+        ]
+        if len(pictures) < 6:
+            QMessageBox.warning(None, "Incomplete", f"You only have {len(pictures)}/6 pictures. Please take more!")
+        else:
+            QMessageBox.information(None, "Complete", "You have taken all 6 pictures!")
+
 
     @staticmethod
     def show_notification(self, message: str):

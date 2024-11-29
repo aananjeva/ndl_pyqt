@@ -169,6 +169,19 @@ ApplicationWindow {
             ColumnLayout {
                 Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                 spacing: 20
+                anchors.centerIn: parent
+
+                Button {
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    text: "←"  // You can replace this with an icon if you prefer
+                    font.pointSize: 20
+                    background: Rectangle {
+                        color: "white"
+                    }
+                    onClicked: {
+                        stackView.pop()
+                    }
+                }
 
                 Text {
                     text: "Default Login"
@@ -326,7 +339,7 @@ ApplicationWindow {
                     text: "+ add pictures"
 
                     onClicked: {
-                        python.open_camera_and_take_pictures()
+                        stackView.push(addPicturesPage)
                     }
                 }
 
@@ -357,69 +370,6 @@ ApplicationWindow {
         }
     }
 
-    Component {
-        id: addPicturesPage
-
-        Rectangle {
-            anchors.fill: parent
-            color: "white"
-
-            Button {
-                text: "←"
-                font.pointSize: 20
-                background: Rectangle {
-                    color: "white"
-                }
-                onClicked: {
-                    stackView.pop()  // Go back to the login page
-                }
-            }
-
-            ColumnLayout {
-                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                spacing: 20
-
-                Text {
-                    text: "Please make 6 pictures from different angles"
-                    font.pointSize: 20
-                    font.bold: true
-                    color: "black"
-                    horizontalAlignment: Text.AlignHCenter
-                }
-
-                Rectangle {
-                    id: picturePreview
-                    width: 300
-                    height: 300
-                    color: "#f0f0f0"
-                    border.color: "gray"
-                    border.width: 1
-
-                    Text {
-                        text: "Picture Preview"
-                        anchors.centerIn: parent
-                        color: "gray"
-                    }
-                }
-
-                Button {
-                    text: "Take Pictures"
-                    Layout.alignment: Qt.AlignHCenter
-                    onClicked: {
-                        // python.open_camera_and_take_pictures()
-                    }
-                }
-
-                Button {
-                    text: "Done"
-                    Layout.alignment: Qt.AlignHCenter
-                    onClicked: {
-                        stackView.pop()
-                    }
-                }
-            }
-        }
-    }
 
     Component {
         id: mainPage
@@ -993,5 +943,50 @@ ApplicationWindow {
             }
         }
     }
+
+    Component {
+        id: addPicturesPage
+
+        Rectangle {
+            anchors.fill: parent
+            color: "white"
+
+            ColumnLayout {
+                anchors.centerIn: parent
+                spacing: 20
+
+                Text {
+                    text: "Please take 6 pictures using your device camera."
+                    font.pointSize: 18
+                    font.bold: true
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
+                }
+
+                Button {
+                    text: "Move Pictures"
+                    onClicked: {
+                    python.move_pictures_to_app_folder()
+                    }
+                }
+
+                Button {
+                    text: "Open Camera"
+                    onClicked: {
+                        python.open_device_camera()
+                    }
+                }
+
+                Button {
+                    text: "Finish"
+                    onClicked: {
+                        python.check_picture_completion()  // Verify picture completion in Python
+                    }
+                }
+            }
+        }
+    }
+
+
 
 }
