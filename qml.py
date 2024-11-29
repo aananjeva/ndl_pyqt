@@ -106,7 +106,7 @@ ApplicationWindow {
                        Layout.preferredWidth: 300 
                        Layout.preferredHeight: 50
                        onClicked: {
-                           python.on_login_button_click(
+                           python.login(
                                 usernameField.text,
                                 passwordField.text
                            )
@@ -336,7 +336,7 @@ ApplicationWindow {
 
                   Layout.alignment: Qt.AlignHCenter
                   onClicked: {
-                      python.on_register_button_click(
+                      python.register(
                           registerUsernameField.text, 
                           registerPasswordField.text, 
                           repeatPasswordField.text, 
@@ -765,7 +765,7 @@ ApplicationWindow {
                     Layout.alignment: Qt.AlignLeft
                     MouseArea {
                         anchors.fill: parent  
-                        onClicked: newUserDialog.open()
+                        onClicked: newMemberDialog.open()
                     }
                 }
             }
@@ -912,7 +912,7 @@ ApplicationWindow {
 
 
    Dialog {
-       id: newUserDialog
+       id: newMemberDialog
        width: 400
        height: 599
        modal: true  // Ensures it's modal (blocks interaction with the background)
@@ -948,7 +948,7 @@ ApplicationWindow {
               border.width: 1
 
               TextField {
-                  id: registerUsernameField
+                  id: newUsernameField
                   placeholderText: "username"
                   anchors.fill: parent
                   padding: 10
@@ -982,7 +982,7 @@ ApplicationWindow {
                   Layout.alignment: Qt.AlignHCenter
                   onClicked: {
                     python.on_create_member_button_click(
-                        registerUsernameField.text,
+                        newUsernameField.text,
                         picturesArray
                     )
                   }
