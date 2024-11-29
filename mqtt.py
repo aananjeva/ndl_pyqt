@@ -5,11 +5,13 @@ import threading
 from user_commands.delete_member_response import on_delete_member_response
 from user_commands.edit_member_response import on_edit_member_response
 from user_commands.forgot_password_response import on_forgot_password_response
+from user_commands.list_active_members_response import on_list_active_members_response
 from user_commands.list_all_members_response import on_list_all_members_response
 from user_commands.new_member_response import on_new_member_response
 from user_commands.register_response import on_register_response
 from util.endpoints import Endpoints
 from user_commands.login_response import on_login_response
+
 
 class MQTTServer:
     def __init__(self):
@@ -29,46 +31,38 @@ class MQTTServer:
         self._client.subscribe("magnetic_lock")
         self._client.subscribe("login_response")
 
-    # TODO: how do I handle it?
 
     @classmethod
     def _on_message(cls, client, userdata, msg):
         try:
             match msg.topic:
-                case "mqtt_responses_cached":
-                    payload = msg.payload.decode()
-                    # TODO these part
-                    if on_login_response(payload):
-                        # include logging a.k. program logs
-                        pass
-                    print(payload)
                 case "forgot_password_response":
                     payload = msg.payload.decode()
-                    print(payload)
+                    on_forgot_password_response(payload)
                 case "register_response":
                     payload = msg.payload.decode()
-                    print(payload)
+                    on_register_response(payload)
                 case "new_member_response":
                     payload = msg.payload.decode()
-                    print(payload)
+                    on_new_member_response(payload)
                 case "edit_member_response":
                     payload = msg.payload.decode()
-                    print(payload)
+                    on_edit_member_response(payload)
                 case "delete_member_response":
                     payload = msg.payload.decode()
-                    print(payload)
+                    on_delete_member_response(payload)
                 case "all_members_response":
                     payload = msg.payload.decode()
-                    print(payload)
-                case "all_members_response":
+                    on_list_all_members_response(payload)
+                case "active_members_response":
                     payload = msg.payload.decode()
-                    print(payload)
+                    on_list_active_members_response(payload)
                 case "magnetic_lock":
                     payload = msg.payload.decode()
                     print(payload)
                 case "login_response":
                     payload = msg.payload.decode()
-                    print(payload)
+                    on_login_response(payload)
                 case _:
                     pass
         except Exception as e:

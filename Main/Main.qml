@@ -48,7 +48,9 @@ ApplicationWindow {
             anchors.fill: parent
             color: "white"
 
+
             ColumnLayout {
+                anchors.centerIn: parent
                 spacing: 20
 
                 Text {
@@ -124,7 +126,7 @@ ApplicationWindow {
                         MouseArea {
                             anchors.fill: parent
                             onClicked: {
-
+                                stackView.push(defaultPasswordPage)
                             }
                         }
                     }
@@ -239,6 +241,7 @@ ApplicationWindow {
 
             ColumnLayout {
                 spacing: 20   // Space between elements
+                anchors.centerIn: parent
 
                 Button {
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
@@ -248,7 +251,7 @@ ApplicationWindow {
                         color: "white"
                     }
                     onClicked: {
-                        stackView.pop()  // Go back to the login page
+                        stackView.pop()
                     }
                 }
 
@@ -323,7 +326,7 @@ ApplicationWindow {
                     text: "+ add pictures"
 
                     onClicked: {
-                        // python.open_camera_and_take_pictures()
+                        python.open_camera_and_take_pictures()
                     }
                 }
 
