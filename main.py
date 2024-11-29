@@ -1,6 +1,7 @@
 import json
 import sys
 
+import gui
 import mqtt as mqtt
 from PySide6.QtWidgets import QMessageBox, QApplication, QWidget
 from PySide6 import QtWidgets
@@ -23,7 +24,6 @@ class SmartLockSystem:
         self.client = mqtt.MQTTServer()
         self.client.run()
         self.user_commands = UserCommands(self.client)
-
 
 
 # ---------------------------------------------------------------------
@@ -84,17 +84,16 @@ if __name__ == "__main__":
     mqtt_server.run()  # Start the MQTT server
     # Initialize UserCommands with the MQTT server
     gui = GuiBackend(mqtt_server)
-
     app = QGuiApplication(sys.argv)
     engine = QQmlApplicationEngine()
     engine.addImportPath(sys.path[0])
-    engine.rootContext().setContextProperty("python", gui)  # Expose `MyWidget` to QML
+    engine.rootContext().setContextProperty("python", gui)
+    # Expose `MyWidget` to QML
     engine.loadFromModule("Main", "Main")
     # engine.load("/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/Main/Main.qml")
     if not engine.rootObjects():
         sys.exit(-1)
     exit_code = app.exec()
-
     del engine
     sys.exit(exit_code)
 

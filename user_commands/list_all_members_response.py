@@ -6,7 +6,7 @@ def on_list_all_members_response(msg):
         response = msg.payload.decode()
         list_all_members_code = ListAllMembersResponseCodes.string_to_enum(response)
         if list_all_members_code in ListAllMembersResponseCodes:
-            with open("../mqtt_responses_cached/list_all_members_authorized.csv", "w") as file:
+            with open("mqtt_responses_cached/list_all_members_authorized.csv", "w") as file:
                 file.write(str(list_all_members_code))
             return True
         return False

@@ -16,14 +16,15 @@ class UserCommands:
         self._stored_password = None
         # main mqtt topics
         self._topic_ask_login = "login_ask"
-        self._topic_ask_reg = "register_ask"
-        self._topic_ask_press_button = "press_button_ask"
-        self._topic_ask_new_member = "new_member_ask"
-        self._topic_ask_change_password = "change_password_ask"
-        self._topic_ask_lock_unlock = "lock_unlock_ask"
-        self._topic_ask_all_members = "all_members_ask"
-        self._topic_ask_active_members = "active_members_ask"
-        self._topic_delete_member = "delete_member_ask"
+        self._topic_ask_reg = "register"
+        # self._topic_ask_press_button = "press_button_ask"
+        self._topic_ask_new_member = "add_member"
+        self._topic_ask_change_password = "change_password"
+        self._topic_ask_lock_unlock = "lock_status"
+        self._topic_ask_all_members = "all_members"
+        self._topic_ask_active_members = "active_members"
+        self._topic_delete_member = "delete_member"
+        # "change_member_data"
 
 
     @classmethod
