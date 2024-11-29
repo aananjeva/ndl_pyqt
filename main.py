@@ -87,13 +87,13 @@ if __name__ == "__main__":
     app = QGuiApplication(sys.argv)
     engine = QQmlApplicationEngine()
     engine.addImportPath(sys.path[0])
-    engine.rootContext().setContextProperty("python", gui)  # Expose `MyWidget` to QML
+    engine.rootContext().setContextProperty("python", gui)
+    # Expose `MyWidget` to QML
     engine.loadFromModule("Main", "Main")
     # engine.load("/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/Main/Main.qml")
     if not engine.rootObjects():
         sys.exit(-1)
     exit_code = app.exec()
-
     del engine
     sys.exit(exit_code)
 

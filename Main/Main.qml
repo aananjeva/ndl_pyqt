@@ -339,7 +339,7 @@ ApplicationWindow {
                     text: "+ add pictures"
 
                     onClicked: {
-                        stackView.push(addPicturesPage)
+                        stackView.push(cameraPage)
                     }
                 }
 
@@ -944,8 +944,51 @@ ApplicationWindow {
         }
     }
 
-    Component {
-        id: addPicturesPage
+    // Component {
+    //     id: addPicturesPage
+    //
+    //     Rectangle {
+    //         anchors.fill: parent
+    //         color: "white"
+    //
+    //         ColumnLayout {
+    //             anchors.centerIn: parent
+    //             spacing: 20
+    //
+    //             Text {
+    //                 text: "Please take 6 pictures using your device camera."
+    //                 font.pointSize: 18
+    //                 font.bold: true
+    //                 color: "black"
+    //                 horizontalAlignment: Text.AlignHCenter
+    //             }
+    //
+    //             Button {
+    //                 text: "Move Pictures"
+    //                 onClicked: {
+    //                 python.move_pictures_to_app_folder()
+    //                 }
+    //             }
+    //
+    //             Button {
+    //                 text: "Open Camera"
+    //                 onClicked: {
+    //                     python.open_device_camera()
+    //                 }
+    //             }
+    //
+    //             Button {
+    //                 text: "Finish"
+    //                 onClicked: {
+    //                     python.check_picture_completion()  // Verify picture completion in Python
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
+
+   Component {
+        id: cameraPage
 
         Rectangle {
             anchors.fill: parent
@@ -956,7 +999,7 @@ ApplicationWindow {
                 spacing: 20
 
                 Text {
-                    text: "Please take 6 pictures using your device camera."
+                    text: "Take 6 Pictures"
                     font.pointSize: 18
                     font.bold: true
                     color: "black"
@@ -964,29 +1007,29 @@ ApplicationWindow {
                 }
 
                 Button {
-                    text: "Move Pictures"
+                    text: "Take Picture"
                     onClicked: {
-                    python.move_pictures_to_app_folder()
-                    }
-                }
-
-                Button {
-                    text: "Open Camera"
-                    onClicked: {
-                        python.open_device_camera()
+                        python.take_picture()  // Call the Python function to capture a picture
                     }
                 }
 
                 Button {
                     text: "Finish"
+                    enabled: python.pictureCount === 6  // Enable only after 6 pictures
                     onClicked: {
-                        python.check_picture_completion()  // Verify picture completion in Python
+                        stackView.pop()  // Return to the previous page
                     }
+                }
+
+                Text {
+                    text: "Pictures Taken: " + python.pictureCount + "/6"
+                    font.pointSize: 16
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
                 }
             }
         }
     }
-
 
 
 }

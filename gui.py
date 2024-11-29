@@ -4,7 +4,8 @@ import time
 import subprocess
 from shutil import move
 
-from PySide6.QtCore import QObject, Slot, QTimer
+import cv2
+from PySide6.QtCore import QObject, Slot, QTimer, Property
 from PySide6.QtMultimedia import QCamera, QMediaCaptureSession, QImageCapture
 from PySide6.QtWidgets import QMessageBox
 from mqtt import MQTTServer
@@ -13,9 +14,11 @@ from PySide6.QtMultimedia import QCamera
 from program_codes.new_member_response_codes import NewMemberResponseCodes
 from program_codes.register_response_codes import RegisterResponseCodes
 from UserCommands import UserCommands
+from PySide6.QtCore import Property, Signal
 
 
 class GuiBackend(QObject):
+    pictureCountChanged = Signal()
     def __init__(self, mqtt: MQTTServer):
         super().__init__()
         self._user_commands = UserCommands(mqtt)
@@ -25,21 +28,85 @@ class GuiBackend(QObject):
         if not os.path.exists(self.pictures_dir):
             os.makedirs(self.pictures_dir)
 
+        #new:
+        # Camera setup
+        self.camera = QCamera()
+        self.capture_session = QMediaCaptureSession()
+        self.image_capture = QImageCapture(self.camera)
+
+        # Configure capture session
+        self.capture_session.setCamera(self.camera)
+        self.capture_session.setImageCapture(self.image_capture)
 
     @Slot()
-    def open_device_camera(self):
-        """Open the device's default camera application."""
+    def start_camera(self):
+        self.picture_count = 0
+        self.camera.start()
+        print("Camera started. Ready to take pictures.")
+
+    @Slot()
+    def take_picture(self):
+        """Take a picture and save it."""
         try:
-            if sys.platform == "darwin":  # macOS
-                subprocess.run(["open", "-a", "Photo Booth"])  # Replace with your default camera app
-            elif sys.platform == "win32":  # Windows
-                subprocess.run(["start", "microsoft.windows.camera:"], shell=True)
-            elif sys.platform.startswith("linux"):  # Linux
-                subprocess.run(["cheese"])  # Cheese is a common Linux camera app
+            cap = cv2.VideoCapture(0)  # Open the default camera
+            if not cap.isOpened():
+                print("Error: Cannot access the camera.")
+                return
+
+            ret, frame = cap.read()
+            if not ret:
+                print("Failed to capture frame.")
+                return
+
+            if self._picture_count < 6:
+                file_path = os.path.join(self.pictures_dir, f"picture_{self._picture_count + 1}.jpg")
+                cv2.imwrite(file_path, frame)
+                self._picture_count += 1
+                self.pictureCountChanged.emit()  # Notify QML of the updated count
+                print(f"Picture {self._picture_count} saved to {file_path}")
             else:
-                QMessageBox.critical(None, "Error", "Unsupported platform")
-        except Exception as e:
-            QMessageBox.critical(None, "Error", f"Failed to open camera: {e}")
+                print("6 pictures already taken.")
+        finally:
+            cap.release()
+            cv2.destroyAllWindows()
+
+    @Property(int, notify=pictureCountChanged)
+    def pictureCount(self):
+        return self._picture_count
+
+    def _save_picture(self, id, preview, file_path):
+        """Handle picture saving."""
+        print(f"Picture saved to {file_path}")
+
+    @Slot()
+    def check_completion(self):
+        """Verify if 6 pictures have been taken."""
+        if self.picture_count < 6:
+            print(f"Only {self.picture_count}/6 pictures taken.")
+        else:
+            print("All 6 pictures have been taken.")
+
+
+    def set_picture_count(self, count):
+        if self._picture_count != count:
+            self._picture_count = count
+            self.pictureCountChanged.emit()
+
+
+    # @Slot()
+    # def open_device_camera(self):
+    #     """Open the device's default camera application."""
+    #     try:
+    #         if sys.platform == "darwin":  # macOS
+    #             subprocess.run(["open", "-a", "Photo Booth"])  # Replace with your default camera app
+    #         elif sys.platform == "win32":  # Windows
+    #             subprocess.run(["start", "microsoft.windows.camera:"], shell=True)
+    #         elif sys.platform.startswith("linux"):  # Linux
+    #             subprocess.run(["cheese"])  # Cheese is a common Linux camera app
+    #         else:
+    #             QMessageBox.critical(None, "Error", "Unsupported platform")
+    #     except Exception as e:
+    #         QMessageBox.critical(None, "Error", f"Failed to open camera: {e}")
 
     @Slot()
     def move_pictures_to_app_folder(self):
@@ -72,6 +139,40 @@ class GuiBackend(QObject):
         else:
             QMessageBox.information(None, "Complete", "You have taken all 6 pictures!")
 
+    # @Slot()
+    # def capture_pictures(self):
+    #     try:
+    #         cap = cv2.VideoCapture(0)  # Open the default camera
+    #         if not cap.isOpened():
+    #             print("Error: Cannot access the camera.")
+    #             return
+    #
+    #         print("Press 'Space' to take a picture and 'ESC' to exit.")
+    #         self._picture_count = 0
+    #
+    #         while self._picture_count < 6:
+    #             ret, frame = cap.read()
+    #             if not ret:
+    #                 print("Failed to capture frame. Exiting.")
+    #                 break
+    #
+    #             cv2.imshow("Camera", frame)
+    #             key = cv2.waitKey(1)
+    #
+    #             if key == 27:  # ESC key to exit
+    #                 break
+    #             elif key == 32:  # Space key to take a picture
+    #                 file_path = os.path.join(self.pictures_dir, f"picture_{self._picture_count + 1}.jpg")
+    #                 cv2.imwrite(file_path, frame)
+    #                 self._picture_count += 1
+    #                 print(f"Picture {self._picture_count} saved to {file_path}")
+    #
+    #     except KeyboardInterrupt:
+    #         print("Capture interrupted by user.")
+    #     finally:
+    #         cap.release()
+    #         cv2.destroyAllWindows()
+    #         print("Camera closed.")
 
     @staticmethod
     def show_notification(self, message: str):
@@ -81,6 +182,10 @@ class GuiBackend(QObject):
         msg_box.setStyleSheet("QLabel {min-width: 150px;}")
         msg_box.show()
         QTimer.singleShot(3000, msg_box.close)
+
+    def set_stack_view(self, stack_view):
+        self.stackView = stack_view
+
 
     @Slot(str, str)
     def login(self, username, password):
@@ -92,7 +197,7 @@ class GuiBackend(QObject):
             return
 
         # sleep(3) "Please wait"
-        self.show_notification(self, "Please wait :)")
+        # self.show_notification(self, "Please wait :)")
         time.sleep(3)
 
         # check the login response using csv file and convert it to enum using string_to_enum
@@ -103,14 +208,14 @@ class GuiBackend(QObject):
 
                 if login_code == LoginResponseCodes.OK:
                     print("Login successful")
-                    self.show_notification(self,"Login successful")
+                    # self.show_notification(self,"Login successful")
                     self.stackView.push(self.mainPage)
                 elif login_code == LoginResponseCodes.FAILED:
                     print("Login failed")
-                    self.show_notification(self, "Login failed")
+                    # self.show_notification(self, "Login failed")
                     # self.stack_view.push("mainPage")
                 else:
-                    self.show_notification(self, "Please try again")
+                    # self.show_notification(self, "Please try again")
                     print("Please try again")
 
         except Exception as e:
@@ -123,7 +228,6 @@ class GuiBackend(QObject):
         except Exception as e:
             print(f"Error initiating register: {str(e)}")
             return
-
 
         # sleep(3) "Please wait"
         self.show_notification(self, "Please wait :)")
