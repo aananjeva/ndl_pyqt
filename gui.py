@@ -1,12 +1,10 @@
 import os
-import sys
 import time
-import subprocess
 from shutil import move
 
 import cv2
-from PySide6.QtCore import QObject, Slot, QTimer, Property
-from PySide6.QtMultimedia import QCamera, QMediaCaptureSession, QImageCapture
+from PySide6.QtCore import QObject, Slot, QAbstractListModel, QModelIndex, Qt
+from PySide6.QtMultimedia import QMediaCaptureSession, QImageCapture
 from PySide6.QtWidgets import QMessageBox
 from mqtt import MQTTServer
 from program_codes.login_response_codes import LoginResponseCodes
@@ -16,9 +14,28 @@ from program_codes.register_response_codes import RegisterResponseCodes
 from UserCommands import UserCommands
 from PySide6.QtCore import Property, Signal
 
+class MembersModel(QAbstractListModel):
+    def __init__(self, members=None):
+        super().__init__()
+        self._members = members or []
+
+    def rowCount(self, parent=QModelIndex()):
+        return len(self._members)
+
+    def data(self, index, role):
+        if not index.isValid():
+            return None
+        if role == Qt.DisplayRole:
+            return self._members[index.row()]
+
+    def add_member(self, member):
+        self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount())
+        self._members.append(member)
+        self.endInsertRows()
 
 class GuiBackend(QObject):
     pictureCountChanged = Signal()
+    # notificationSignal = Signal(str)
     def __init__(self, mqtt: MQTTServer):
         super().__init__()
         self._user_commands = UserCommands(mqtt)
@@ -52,6 +69,10 @@ class GuiBackend(QObject):
             if not cap.isOpened():
                 print("Error: Cannot access the camera.")
                 return
+
+            # cap.set(cv2.CAP_PROP_BRIGHTNESS, 10)
+            # cap.set(cv2.CAP_PROP_CONTRAST, 0.5)
+            # cap.set(cv2.CAP_PROP_EXPOSURE, 5)
 
             ret, frame = cap.read()
             if not ret:
@@ -92,21 +113,10 @@ class GuiBackend(QObject):
             self._picture_count = count
             self.pictureCountChanged.emit()
 
-
-    # @Slot()
-    # def open_device_camera(self):
-    #     """Open the device's default camera application."""
-    #     try:
-    #         if sys.platform == "darwin":  # macOS
-    #             subprocess.run(["open", "-a", "Photo Booth"])  # Replace with your default camera app
-    #         elif sys.platform == "win32":  # Windows
-    #             subprocess.run(["start", "microsoft.windows.camera:"], shell=True)
-    #         elif sys.platform.startswith("linux"):  # Linux
-    #             subprocess.run(["cheese"])  # Cheese is a common Linux camera app
-    #         else:
-    #             QMessageBox.critical(None, "Error", "Unsupported platform")
-    #     except Exception as e:
-    #         QMessageBox.critical(None, "Error", f"Failed to open camera: {e}")
+    # @Slot(str)
+    # def show_notification(self, message: str):
+    #     print(f"Emitting notification: {message}")  # Debug print
+    #     self.notificationSignal.emit(message)
 
     @Slot()
     def move_pictures_to_app_folder(self):
@@ -139,49 +149,8 @@ class GuiBackend(QObject):
         else:
             QMessageBox.information(None, "Complete", "You have taken all 6 pictures!")
 
-    # @Slot()
-    # def capture_pictures(self):
-    #     try:
-    #         cap = cv2.VideoCapture(0)  # Open the default camera
-    #         if not cap.isOpened():
-    #             print("Error: Cannot access the camera.")
-    #             return
-    #
-    #         print("Press 'Space' to take a picture and 'ESC' to exit.")
-    #         self._picture_count = 0
-    #
-    #         while self._picture_count < 6:
-    #             ret, frame = cap.read()
-    #             if not ret:
-    #                 print("Failed to capture frame. Exiting.")
-    #                 break
-    #
-    #             cv2.imshow("Camera", frame)
-    #             key = cv2.waitKey(1)
-    #
-    #             if key == 27:  # ESC key to exit
-    #                 break
-    #             elif key == 32:  # Space key to take a picture
-    #                 file_path = os.path.join(self.pictures_dir, f"picture_{self._picture_count + 1}.jpg")
-    #                 cv2.imwrite(file_path, frame)
-    #                 self._picture_count += 1
-    #                 print(f"Picture {self._picture_count} saved to {file_path}")
-    #
-    #     except KeyboardInterrupt:
-    #         print("Capture interrupted by user.")
-    #     finally:
-    #         cap.release()
-    #         cv2.destroyAllWindows()
-    #         print("Camera closed.")
 
-    @staticmethod
-    def show_notification(self, message: str):
-        msg_box = QMessageBox()
-        msg_box.setWindowTitle("Notification")
-        msg_box.setText(message)
-        msg_box.setStyleSheet("QLabel {min-width: 150px;}")
-        msg_box.show()
-        QTimer.singleShot(3000, msg_box.close)
+
 
     def set_stack_view(self, stack_view):
         self.stackView = stack_view
@@ -208,10 +177,11 @@ class GuiBackend(QObject):
 
                 if login_code == LoginResponseCodes.OK:
                     print("Login successful")
-                    # self.show_notification(self,"Login successful")
-                    self.stackView.push(self.mainPage)
+                    # self.notificationSignal.emit("Login successful")
+                    # self.stackView.push(self.mainPage)
                 elif login_code == LoginResponseCodes.FAILED:
                     print("Login failed")
+                    # self.notificationSignal.emit("Login failed")
                     # self.show_notification(self, "Login failed")
                     # self.stack_view.push("mainPage")
                 else:
@@ -230,7 +200,7 @@ class GuiBackend(QObject):
             return
 
         # sleep(3) "Please wait"
-        self.show_notification(self, "Please wait :)")
+        # self.show_notification(self, "Please wait :)")
         time.sleep(3)
 
         # check the register response using csv file and convert it to enum using string_to_enum
@@ -241,13 +211,13 @@ class GuiBackend(QObject):
 
                 if register_code == RegisterResponseCodes.OK:
                     print("Registration successful")
-                    self.show_notification(self, "Registration successful")
+                    # self.show_notification(self, "Registration successful")
                     # self.stackView.push(self.mainPage)
                 elif register_code == RegisterResponseCodes.FAILED:
                     print("Registration failed")
-                    self.show_notification(self, "Registration failed")
+                    # self.show_notification(self, "Registration failed")
                 else:
-                    self.show_notification(self, "Please try again")
+                    # self.show_notification(self, "Please try again")
                     print("Please try again")
 
         except Exception as e:
@@ -257,17 +227,17 @@ class GuiBackend(QObject):
     def forgot_password(self):
         pass
 
-    def new_member(self):
-        name = self.newUsernameField.text()
-        pics = self.picturesArray
-
+    @Slot(str, str, list)
+    def new_member(self, name, surname, pictures):
         try:
-            self.new_member(name, pics)
+            self._user_commands.new_member(name, surname, pictures)
+            self.members_model.add_member({"name": f"{name} {surname}", "profilePicture": pictures[0]})
         except Exception as e:
-            self.message_label.setText(f"Error creating a new member")
+            # self.message_label.setText(f"Error creating a new member")
+            print(f"Error initiating new member: {str(e)}")
             return
 
-        self.message_label.setText("Please wait:)")
+        # self.message_label.setText("Please wait:)")
         time.sleep(3)
 
         try:
@@ -276,12 +246,15 @@ class GuiBackend(QObject):
                 new_member_code = NewMemberResponseCodes.string_to_enum(response)
 
                 if new_member_code == NewMemberResponseCodes.OK:
-                    self.message_label.setText("New member was created!")
+                    # self.message_label.setText("New member was created!")
+                    print("New member was created")
                     # I need to update the list here???
                 elif new_member_code == NewMemberResponseCodes.FAILED:
-                    self.message_label.setText("Failed to create a new member")
+                    print("New member was not created")
+                    # self.message_label.setText("Failed to create a new member")
                 else:
-                    self.message_label.setText("Please try again")
+                    print("Please try again")
+                    # self.message_label.setText("Please try again")
 
         except Exception as e:
             raise e
@@ -298,4 +271,3 @@ class GuiBackend(QObject):
 
     def list_active_members(self):
         pass
-    # TODO: to check the functions

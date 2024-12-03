@@ -20,6 +20,19 @@ ApplicationWindow {
         initialItem: introPage
     }
 
+    // Notification {
+    //     id: notification
+    //     anchors.bottom: parent.bottom
+    //     anchors.horizontalCenter: parent.horizontalCenter
+    //     width: parent.width * 0.8
+    // }
+    //
+    // Connections {
+    //     target: guiBackend
+    //     onNotificationSignal: notification.show(message)
+    // }
+
+
     Component {
         id: introPage
 
@@ -165,23 +178,25 @@ ApplicationWindow {
         Rectangle {
             anchors.fill: parent
             color: "white"
+            Button {
+                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                text: "←"  // You can replace this with an icon if you prefer
+                font.pointSize: 20
+                anchors.left: parent.left
+                anchors.top: parent.top
+                background: Rectangle {
+                    color: "white"
+                }
+                onClicked: {
+                    stackView.pop()
+                }
+            }
 
             ColumnLayout {
                 Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                 spacing: 20
                 anchors.centerIn: parent
 
-                Button {
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    text: "←"  // You can replace this with an icon if you prefer
-                    font.pointSize: 20
-                    background: Rectangle {
-                        color: "white"
-                    }
-                    onClicked: {
-                        stackView.pop()
-                    }
-                }
 
                 Text {
                     text: "Default Login"
@@ -251,22 +266,23 @@ ApplicationWindow {
         Rectangle {
             anchors.fill: parent
             color: "white"
+            Button {
+                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                text: "←"  // You can replace this with an icon if you prefer
+                font.pointSize: 20
+                anchors.left: parent.left
+                anchors.top: parent.top
+                background: Rectangle {
+                    color: "white"
+                }
+                onClicked: {
+                    stackView.pop()
+                }
+            }
 
             ColumnLayout {
                 spacing: 20   // Space between elements
                 anchors.centerIn: parent
-
-                Button {
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    text: "←"  // You can replace this with an icon if you prefer
-                    font.pointSize: 20
-                    background: Rectangle {
-                        color: "white"
-                    }
-                    onClicked: {
-                        stackView.pop()
-                    }
-                }
 
                 Text {
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
@@ -335,14 +351,6 @@ ApplicationWindow {
                     }
                 }
 
-                Button {
-                    text: "+ add pictures"
-
-                    onClicked: {
-                        stackView.push(cameraPage)
-                    }
-                }
-
 
                 Button {
                     text: "Register"
@@ -361,8 +369,7 @@ ApplicationWindow {
                         python.register(
                             registerUsernameField.text,
                             registerPasswordField.text,
-                            repeatPasswordField.text,
-                            picturesArray
+                            repeatPasswordField.text
                         )
                     }
                 }
@@ -380,6 +387,8 @@ ApplicationWindow {
             color: "white"
 
             ColumnLayout {
+                anchors.fill: parent
+                spacing: 20
 
                 Text {
                     id: settingsButton
@@ -475,6 +484,7 @@ ApplicationWindow {
                         Layout.preferredHeight: 80
                     }
                 }
+
             }
         }
     }
@@ -488,14 +498,13 @@ ApplicationWindow {
 
 
         Rectangle {
-            anchors.fill: parent
             color: "white" // Background color
-            radius: 10 // Optional: rounded corners
-
+            anchors.fill: parent
 
             ColumnLayout {
                 anchors.fill: parent
-
+                spacing: 15  // Space between elements
+                anchors.margins: 20
 
                 Text {
                     text: "Account"
@@ -548,18 +557,18 @@ ApplicationWindow {
     Dialog {
         id: changePasswordDialog
         width: 400
-        height: 350
+        height: 600
         modal: true
         visible: false
+        anchors.centerIn: parent
 
         Rectangle {
             anchors.fill: parent
-            color: "white"
-            radius: 10  // Optional: rounded corners
 
             ColumnLayout {
                 anchors.fill: parent
                 spacing: 10
+                anchors.margins: 20  // Add some padding inside the dialog
 
                 Text {
                     text: "Change Password"
@@ -709,17 +718,20 @@ ApplicationWindow {
                     }
                 }
 
+
                 RowLayout {
-                    Layout.alignment: Qt.AlignLeft
+                    Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
                     Text {
-                        id: settingsButton
+                        id: newMemberButton
                         text: "+"
                         font.pointSize: 40
                         color: "grey"
                         Layout.alignment: Qt.AlignLeft
                         MouseArea {
                             anchors.fill: parent
-                            onClicked: newMemberDialog.open()
+                            onClicked: {
+                                stackView.push(newMemberPage)
+                            }
                         }
                     }
                 }
@@ -865,84 +877,116 @@ ApplicationWindow {
     }
 
 
-    Dialog {
-        id: newMemberDialog
-        width: 400
-        height: 599
-        modal: true  // Ensures it's modal (blocks interaction with the background)
-        anchors.centerIn: parent
+    Component {
+        id: newMemberPage
 
-
-        Rectangle {
-            id: overlay
-            anchors.fill: parent
-            color: "white"
-            radius: 10
-        }
-
-        ColumnLayout {
-            spacing: 20
-
-            Text {
-                text: "Create a new member"
-                font.pointSize: 24
-                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                font.bold: true
-                color: "black"
-                horizontalAlignment: Text.AlignHCenter
-            }
+        Item {
+            id: newMemberItem
+            width: 400
+            height: 600
+            anchors.centerIn: parent
 
             Rectangle {
-                width: 300
-                height: 50
-                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                id: overlay
+                anchors.fill: parent
                 color: "white"
-                border.color: "gray"
-                border.width: 1
-
-                TextField {
-                    id: newUsernameField
-                    placeholderText: "username"
-                    anchors.fill: parent
-                    padding: 10
-                    font.pointSize: 18
-                    verticalAlignment: TextInput.AlignVCenter
-                }
+                radius: 10
             }
 
             Button {
                 Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                text: "Take Pictures"
-
-                onClicked: {
-                    // python.open_camera_and_take_pictures()
-                }
-            }
-
-            Button {
-                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                text: "Create"
-                width: 150  // Set a specific width
-                height: 50  // Set a specific height
-                Layout.preferredWidth: 150
-                Layout.preferredHeight: 50
-
-
+                text: "←"  // You can replace this with an icon if you prefer
+                font.pointSize: 20
+                anchors.left: parent.left
+                anchors.top: parent.top
                 background: Rectangle {
-                    radius: 10  // Round the corners
-                    border.color: "gray"  // Set a border color
-                    border.width: 1  // Set border width
+                    color: "white"
+                }
+                onClicked: {
+                    stackView.pop()
+                }
+            }
+            ColumnLayout {
+                anchors.centerIn: parent
+                spacing: 20
+
+                Text {
+                    text: "Create a new member"
+                    font.pointSize: 24
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    font.bold: true
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
                 }
 
-                onClicked: {
-                    // python.on_create_member_button_click(
-                    //     newUsernameField.text,
-                    //     picturesArray
-                    // )
+                Rectangle {
+                    width: 300
+                    height: 50
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    color: "white"
+                    border.color: "gray"
+                    border.width: 1
+
+                    TextField {
+                        id: newMemberNameField
+                        placeholderText: "First Name"
+                        anchors.fill: parent
+                        padding: 10
+                        font.pointSize: 18
+                        verticalAlignment: TextInput.AlignVCenter
+                    }
+                }
+
+                Rectangle {
+                    width: 300
+                    height: 50
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    color: "white"
+                    border.color: "gray"
+                    border.width: 1
+
+                    TextField {
+                        id: newMemberSurnameField
+                        placeholderText: "Surname"
+                        anchors.fill: parent
+                        padding: 10
+                        font.pointSize: 18
+                        verticalAlignment: TextInput.AlignVCenter
+                    }
+                }
+
+                Button {
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    text: "Take Pictures"
+
+                    onClicked: {
+                        stackView.push(cameraPage)
+                    }
+                }
+
+                Button {
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    text: "Create"
+                    width: 150
+                    height: 50
+                    Layout.preferredWidth: 150
+                    Layout.preferredHeight: 50
+
+                    background: Rectangle {
+                        radius: 10
+                        border.color: "gray"
+                        border.width: 1
+                    }
+
+                    onClicked: {
+                        // Call a function to handle member creation
+                        // console.log("New member created:", newMemberNameField.text, newMemberSurnameField.text)
+                    }
                 }
             }
         }
     }
+
 
     // Component {
     //     id: addPicturesPage
@@ -987,7 +1031,7 @@ ApplicationWindow {
     //     }
     // }
 
-   Component {
+    Component {
         id: cameraPage
 
         Rectangle {

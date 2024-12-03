@@ -1,12 +1,10 @@
 import json
+
 from util.program_codes import ResetPassword
-import cv2
 from PySide6.QtCore import Slot
-from shiboken6.Shiboken import delete
 
 from mqtt import MQTTServer
 import hashlib
-import re
 from PySide6.QtWidgets import QMessageBox
 
 class UserCommands:
@@ -17,14 +15,14 @@ class UserCommands:
         # main mqtt topics
         self._topic_ask_login = "login_ask"
         self._topic_ask_reg = "register"
-        # self._topic_ask_press_button = "press_button_ask"
+        self._topic_ask_press_button = "press_button_ask"
         self._topic_ask_new_member = "add_member"
         self._topic_ask_change_password = "change_password"
         self._topic_ask_lock_unlock = "lock_status"
         self._topic_ask_all_members = "all_members"
         self._topic_ask_active_members = "active_members"
         self._topic_delete_member = "delete_member"
-        # "change_member_data"
+        self._topic_edit_member = "change_member_data"
 
 
     @classmethod
@@ -65,30 +63,29 @@ class UserCommands:
             raise e
 
     #------------------------------------------------------------------------------
-    def register(self, username, password, repeat_password, pictures):
+    def register(self, username, password, repeat_password):
         try:
-            if password == repeat_password:
+            if not username or not password:
+                raise Exception("Username and password cannot be empty")
+
+            if password != repeat_password:
                 raise Exception("Passwords do not match")
 
-            if len(password) < 8:
-                raise Exception("Password must be at least 8 characters")
+            # if len(password) < 8:
+            #     raise Exception("Password must be at least 8 characters")
+            #
+            # if not re.search(r'[A-Z]', password):
+            #     raise Exception("Password must contain at least one uppercase letter")
+            #
+            # if "ndl" not in password:
+            #     raise Exception("Password must contain the substring ndl")
 
-            if not re.search(r'[A-Z]', password):
-                raise Exception("Password must contain at least one uppercase letter")
-
-            if "ndl" not in password:
-                raise Exception("Password must contain the substring ndl")
-
-
-            if len(pictures) != 6:
-                raise Exception("Pictures must contain 6 images")
 
             hashed_password = self.hash_password(password)
 
             register_data = {
                 "username": username,
                 "password": hashed_password,
-                "pictures": pictures
             }
 
             register_json = json.dumps(register_data)
@@ -98,9 +95,8 @@ class UserCommands:
         except Exception as e:
             raise e
 
-
 #------------------------------------------------------------------------------
-    def create_new_member(self, member_name, pictures):
+    def create_new_member(self, member_name, member_surname, pictures):
         try:
 
             if len(pictures) != 6:
@@ -127,15 +123,14 @@ class UserCommands:
             if self.hash_password(old_password) != self.get_stored_password():
                 raise Exception("Old password is incorrect")
 
-            if len(new_password) < 8:
-                raise Exception("Password should be at least 8 characters")
-
-            if not re.search(r'[A-Z]', new_password):
-                raise Exception("Password must contain at least one uppercase letter")
-
-            if "ndl" not in new_password:
-                raise Exception("Password must contain the substring ndl")
-
+            # if len(new_password) < 8:
+            #     raise Exception("Password should be at least 8 characters")
+            #
+            # if not re.search(r'[A-Z]', new_password):
+            #     raise Exception("Password must contain at least one uppercase letter")
+            #
+            # if "ndl" not in new_password:
+            #     raise Exception("Password must contain the substring ndl")
 
             hashed_new_password = self.hash_password(new_password)
 
@@ -180,24 +175,6 @@ class UserCommands:
             raise e
 
 
-        # def on_all_members_ask_response(client, userdata, msg):
-        #     response = msg.payload.decode()
-        #     if response.get("status") == "ok":
-        #         members = response.get("members", [])
-        #
-        #         self.ui_reference.root_context.setContextProperty("membersModel", [])
-        #
-        #         for member in members:
-        #             self.ui_reference.root_context.setContextProperty("membersModel", {
-        #                 "name": member["name"],
-        #                 "status": member["status"]
-        #             })
-        #     else:
-        #         QMessageBox.information(None, "Error", "Failed to retrieve members list")
-        #
-        #     self.mqtt_client.response_listener(topic_response, on_all_members_ask_response)
-
-
     #------------------------------------------------------------------------------
 
     def delete_member(self, member_name):
@@ -215,48 +192,47 @@ class UserCommands:
 
 
     #------------------------------------------------------------------------------
-    # I need to combine two functions below, so that if the string is empty we change the status,
-    # and if the string is not empty we change the name
 
     @Slot(str, str, bool)
     def change_member(self, member_name, new_member_name, member_status):
-      if new_member_name.strip():
-        topic_ask = "change_member_ask"
+        try:
+          if new_member_name.strip():
 
-        change_data = {
-            "name": member_name,
-            "new_member_name": new_member_name
-        }
+            change_data = {
+                "name": member_name,
+                "new_member_name": new_member_name
+            }
 
-        change_json = json.dumps(change_data)
-        self.mqtt_client.send_to_topic(topic_ask, change_json)
+            change_json = json.dumps(change_data)
+            self._mqtt_client.send_message(change_json, self._topic_edit_member)
 
+          else:
 
-      else:
-          topic_ask = "change_member_status_ask"
+              change_data = {
+                  "name": member_name,
+                  "member_status": member_status
+              }
 
-          change_data = {
-              "name": member_name,
-              "member_status": member_status
-          }
+              change_json = json.dumps(change_data)
+              self.member_name = member_name
+              self.member_has_access = member_status
 
-          change_json = json.dumps(change_data)
-          self.member_name = member_name
-          self.member_has_access = member_status
+              self._mqtt_client.send_message(change_json, self._topic_edit_member)
 
-          self.mqtt_client.send_to_topic(topic_ask, change_json)
-
-
+        except Exception as e:
+            raise e
     #------------------------------------------------------------------------------
 
-    def new_member(self, name, pictures):
+    def new_member(self, name, surname, pictures):
         try:
             new_data = {
                 "name": name,
+                "surname": surname,
                 "pictures": pictures
             }
+            request = {"value": new_data, "session_token": token}
 
-            new_json = json.dumps(new_data)
+            new_json = json.dumps(request)
 
             self._mqtt_client.send_message(new_json, self._topic_ask_new_member)
 
@@ -264,20 +240,3 @@ class UserCommands:
             raise e
 
 
-    #------------------------------------------------------------------------------
-    # TODO: I am not sure I need this
-    def open_camera_and_take_pictures(self):
-        pictures = []
-        cap = cv2.VideoCapture(0)
-
-        for i in range(6):
-            ret, frame = cap.read()
-            if ret:
-                file_path = f"/path/to/save/picture_{i}.jpg"
-                cv2.imwrite(file_path, frame)
-                pictures.append(file_path)
-            cv2.waitKey(1000)  # Wait 1 second between captures
-
-        cap.release()
-        cv2.destroyAllWindows()
-        return pictures

@@ -13,9 +13,9 @@ class RegisterResponseCodes(Enum):
         try:
             match string_lowercase:
                 case "ok":
-                    return Register.OK
+                    return RegisterResponseCodes.OK
                 case "failed":
-                    return LoginResponseCodes.FAILED
+                    return RegisterResponseCodes.FAILED
                 case _:
                     raise ValueError
         except ValueError:
