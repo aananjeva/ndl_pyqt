@@ -14,7 +14,6 @@ def on_login_response(msg: str):
         if login_code == LoginResponseCodes.OK:
             with open("mqtt_responses_cached/login_authorized.csv", "w") as file:
                 file.write(str(login_code))
-
             with open("mqtt_responses_cached/session_token", "w") as token_file:
                 token_file.write(session_token)
 

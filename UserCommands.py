@@ -1,4 +1,7 @@
 import json
+import csv
+
+from urllib3 import request
 
 from util.program_codes import ResetPassword
 from PySide6.QtCore import Slot
@@ -25,6 +28,9 @@ class UserCommands:
         self._topic_edit_member = "change_member_data"
 
 
+        with open("/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/mqtt_responses_cached/session_token.csv", "r") as file:
+            self._token = file.readline().strip()
+
     @classmethod
     def hash_password(cls, password):
         return hashlib.sha256(password.encode()).hexdigest()
@@ -48,6 +54,7 @@ class UserCommands:
                 "username": username,
                 "password": hashed_password
             }
+
             login_json = json.dumps(login_data)
             self._mqtt_client.send_message(login_json, self._topic_ask_login)
 
@@ -55,7 +62,7 @@ class UserCommands:
             raise e
 
     # ------------------------------------------------------------------------------
-
+    #TODO to finish this one
     def forgot_password(self):
         try:
             self._mqtt_client.send_message(ResetPassword.RESET, self._topic_ask_press_button)
@@ -88,7 +95,9 @@ class UserCommands:
                 "password": hashed_password,
             }
 
-            register_json = json.dumps(register_data)
+            register_request = {"value": register_data, "session_token": self._token}
+
+            register_json = json.dumps(register_request)
 
             self._mqtt_client.send_message(register_json, self._topic_ask_reg)
 
@@ -96,19 +105,22 @@ class UserCommands:
             raise e
 
 #------------------------------------------------------------------------------
-    def create_new_member(self, member_name, member_surname, pictures):
+    def create_new_member(self, member_name, member_surname, path_pictures):
         try:
 
-            if len(pictures) != 6:
-                raise Exception("Exactly 6 pictures required")
+            # if len(pictures) != 6:
+            #     raise Exception("Exactly 6 pictures required")
 
             member_data = {
                 "Name": member_name,
-                "Pictures": pictures,
-                "Command": "create_member"
+                "Surname": member_surname,
+                "Pictures": path_pictures,
+                # "Status":
             }
+            member_request = {"value": member_data, "session_token": self._token}
 
-            member_json = json.dumps(member_data)
+            member_json = json.dumps(member_request)
+
             self._mqtt_client.send_message(member_json, self._topic_ask_new_member)
 
         except Exception as e:
@@ -119,7 +131,6 @@ class UserCommands:
 
     def change_password(self, username, old_password, new_password):
         try:
-
             if self.hash_password(old_password) != self.get_stored_password():
                 raise Exception("Old password is incorrect")
 
@@ -139,7 +150,9 @@ class UserCommands:
                 "password": hashed_new_password
             }
 
-            new_password_json = json.dumps(new_password_data)
+            new_password_request = {"value": new_password_data, "session_token": self._token}
+
+            new_password_json = json.dumps(new_password_request)
 
             self._mqtt_client.send_message(new_password_json, self._topic_ask_change_password)
 
@@ -147,7 +160,7 @@ class UserCommands:
             raise e
 
     #------------------------------------------------------------------------------
-    #TODO how?
+    #TODO to add token
     def lock_unlock(self, current_state):
         try:
             self.intended_state = current_state
@@ -157,8 +170,7 @@ class UserCommands:
             raise e
 
     #------------------------------------------------------------------------------
-    #TODO: how do I do it here?
-
+    #TODO to add token
     def active_members(self):
         try:
             self._mqtt_client.send_message("list_active", self._topic_ask_active_members)
@@ -166,7 +178,7 @@ class UserCommands:
             raise e
 
     #------------------------------------------------------------------------------
-
+    #TODO to add token
     def all_members(self):
         try:
             self._mqtt_client.send_message("list_all", self._topic_ask_all_members)
@@ -183,7 +195,9 @@ class UserCommands:
                 "name": member_name
             }
 
-            delete_json = json.dumps(delete_data)
+            delete_request = {"value": delete_data, "session_token": self._token}
+
+            delete_json = json.dumps(delete_request)
 
             self._mqtt_client.send_message(delete_json, self._topic_delete_member)
 
@@ -192,7 +206,7 @@ class UserCommands:
 
 
     #------------------------------------------------------------------------------
-
+    #TODO to add token
     @Slot(str, str, bool)
     def change_member(self, member_name, new_member_name, member_status):
         try:
@@ -230,9 +244,9 @@ class UserCommands:
                 "surname": surname,
                 "pictures": pictures
             }
-            request = {"value": new_data, "session_token": token}
+            new_data_request = {"value": new_data, "session_token": self._token}
 
-            new_json = json.dumps(request)
+            new_json = json.dumps(new_data_request)
 
             self._mqtt_client.send_message(new_json, self._topic_ask_new_member)
 
