@@ -1000,7 +1000,6 @@ ApplicationWindow {
                 }
                 onClicked: {
                     // console.log("Save clicked with data:", newMemberNameField.text, newMemberSurnameField.text, statusComboBox.currentText);
-                    // Add logic to save the member's data
                 }
             }
         }
