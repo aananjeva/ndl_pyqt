@@ -882,8 +882,8 @@ ApplicationWindow {
 
         Item {
             id: newMemberItem
-            width: 400
-            height: 600
+            width: 500
+            height: 650
             anchors.centerIn: parent
 
             Rectangle {
@@ -895,7 +895,7 @@ ApplicationWindow {
 
             Button {
                 Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                text: "←"  // You can replace this with an icon if you prefer
+                text: "←"
                 font.pointSize: 20
                 anchors.left: parent.left
                 anchors.top: parent.top
@@ -906,6 +906,7 @@ ApplicationWindow {
                     stackView.pop()
                 }
             }
+
             ColumnLayout {
                 anchors.centerIn: parent
                 spacing: 20
@@ -929,7 +930,7 @@ ApplicationWindow {
 
                     TextField {
                         id: newMemberNameField
-                        placeholderText: "First Name"
+                        placeholderText: "Name"
                         anchors.fill: parent
                         padding: 10
                         font.pointSize: 18
@@ -964,29 +965,171 @@ ApplicationWindow {
                     }
                 }
 
-                Button {
+                Text {
+                    text: "Select status"
+                    font.pointSize: 18
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    text: "Create"
-                    width: 150
-                    height: 50
-                    Layout.preferredWidth: 150
-                    Layout.preferredHeight: 50
+                    color: "black"
+                }
 
-                    background: Rectangle {
-                        radius: 10
-                        border.color: "gray"
-                        border.width: 1
-                    }
+                ComboBox {
+                    id: statusComboBox
+                    width: 300
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    model: ["Always", "Temporary"]
 
-                    onClicked: {
-                        // Call a function to handle member creation
-                        // console.log("New member created:", newMemberNameField.text, newMemberSurnameField.text)
+                    onCurrentIndexChanged: {
+                        if (currentIndex === 1) { // Temporary selected
+                            dateTimeDialog.open();
+                        }
                     }
+                }
+            }
+
+            Button {
+                text: "Save"
+                font.pointSize: 18
+                width: 150
+                height: 50
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: 20
+                background: Rectangle {
+                    color: "gray"
+                    radius: 10
+                }
+                onClicked: {
+                    // console.log("Save clicked with data:", newMemberNameField.text, newMemberSurnameField.text, statusComboBox.currentText);
+                    // Add logic to save the member's data
                 }
             }
         }
     }
 
+    Dialog {
+        id: dateTimeDialog
+        title: "Select Date and Time"
+        modal: true
+        standardButtons: DialogButtonBox.Ok | DialogButtonBox.Cancel
+        width: 400
+        height: 500
+        anchors.centerIn: parent
+
+        onAccepted: {
+            console.log("Date and Time selected:", daySpinBox.value, monthSpinBox.value, yearSpinBox.value, hourSpinBox.value, minuteSpinBox.value);
+        }
+        onRejected: {
+            console.log("Date and Time selection canceled");
+        }
+
+        ColumnLayout {
+            spacing: 10
+            anchors.centerIn: parent
+
+            Text {
+                text: "Choose Date"
+                font.pointSize: 18
+                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                color: "black"
+            }
+
+            ColumnLayout {
+                spacing: 5
+                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                RowLayout {
+                    Text {
+                        text: "Day"
+                        font.pointSize: 16
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    SpinBox {
+                        id: daySpinBox
+                        from: 1
+                        to: 31
+                        value: 1
+                        width: 40
+                    }
+                }
+
+                RowLayout {
+
+                    Text {
+                        text: "Month"
+                        font.pointSize: 16
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    SpinBox {
+                        id: monthSpinBox
+                        from: 1
+                        to: 12
+                        value: 1
+                        width: 40
+                    }
+                }
+
+                RowLayout {
+
+                    Text {
+                        text: "Year"
+                        font.pointSize: 16
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    SpinBox {
+                        id: yearSpinBox
+                        from: 2024
+                        to: 2030
+                        value: 2024
+                        width: 60
+                    }
+                }
+
+
+            }
+
+            Text {
+                text: "Choose Time"
+                font.pointSize: 18
+                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                color: "black"
+            }
+
+            RowLayout {
+                spacing: 10
+                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+
+                SpinBox {
+                    id: hourSpinBox
+                    from: 0
+                    to: 23
+                    value: 12
+                    width: 30
+                }
+
+                Text {
+                    text: "Hour"
+                    font.pointSize: 16
+                    verticalAlignment: Text.AlignVCenter
+                }
+
+                SpinBox {
+                    id: minuteSpinBox
+                    from: 0
+                    to: 59
+                    value: 0
+                    width: 30
+                }
+
+                Text {
+                    text: "Minutes"
+                    font.pointSize: 16
+                    verticalAlignment: Text.AlignVCenter
+                }
+            }
+        }
+    }
 
     // Component {
     //     id: addPicturesPage
