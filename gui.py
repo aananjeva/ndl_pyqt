@@ -6,6 +6,8 @@ import cv2
 from PySide6.QtCore import QObject, Slot, QAbstractListModel, QModelIndex, Qt
 from PySide6.QtMultimedia import QMediaCaptureSession, QImageCapture
 from PySide6.QtWidgets import QMessageBox
+
+from data_operations.data import FileTransfer
 from mqtt import MQTTServer
 from program_codes.login_response_codes import LoginResponseCodes
 from PySide6.QtMultimedia import QCamera
@@ -13,6 +15,7 @@ from program_codes.new_member_response_codes import NewMemberResponseCodes
 from program_codes.register_response_codes import RegisterResponseCodes
 from UserCommands import UserCommands
 from PySide6.QtCore import Property, Signal
+from datetime import datetime
 
 class MembersModel(QAbstractListModel):
     def __init__(self, members=None):
@@ -35,6 +38,7 @@ class MembersModel(QAbstractListModel):
 
 class GuiBackend(QObject):
     pictureCountChanged = Signal()
+    loginSuccess = Signal()
     # notificationSignal = Signal(str)
     def __init__(self, mqtt: MQTTServer):
         super().__init__()
@@ -91,13 +95,7 @@ class GuiBackend(QObject):
             cap.release()
             cv2.destroyAllWindows()
 
-    @Property(int, notify=pictureCountChanged)
-    def pictureCount(self):
-        return self._picture_count
 
-    def _save_picture(self, id, preview, file_path):
-        """Handle picture saving."""
-        print(f"Picture saved to {file_path}")
 
     @Slot()
     def check_completion(self):
@@ -151,11 +149,6 @@ class GuiBackend(QObject):
 
 
 
-
-    def set_stack_view(self, stack_view):
-        self.stackView = stack_view
-
-
     @Slot(str, str)
     def login(self, username, password):
         # call login from UserCommands
@@ -178,7 +171,7 @@ class GuiBackend(QObject):
                 if login_code == LoginResponseCodes.OK:
                     print("Login successful")
                     # self.notificationSignal.emit("Login successful")
-                    # self.stackView.push(self.mainPage)
+                    self.loginSuccess.emit()
                 elif login_code == LoginResponseCodes.FAILED:
                     print("Login failed")
                     # self.notificationSignal.emit("Login failed")
@@ -212,7 +205,7 @@ class GuiBackend(QObject):
                 if register_code == RegisterResponseCodes.OK:
                     print("Registration successful")
                     # self.show_notification(self, "Registration successful")
-                    # self.stackView.push(self.mainPage)
+                    self.stackView.push(self.mainPage)
                 elif register_code == RegisterResponseCodes.FAILED:
                     print("Registration failed")
                     # self.show_notification(self, "Registration failed")
@@ -227,28 +220,48 @@ class GuiBackend(QObject):
     def forgot_password(self):
         pass
 
-    @Slot(str, str, list)
-    def new_member(self, name, surname, pictures):
+    @Slot(str, str)
+    def new_member(self, name, status):
         try:
-            self._user_commands.new_member(name, surname, pictures)
-            self.members_model.add_member({"name": f"{name} {surname}", "profilePicture": pictures[0]})
+            pictures_dir = "/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/images"
+            pictures = [
+                os.path.join(pictures_dir, f)
+                for f in os.listdir(pictures_dir)
+                if os.path.isfile(os.path.join(pictures_dir, f)) and f.endswith((".jpg", ".png"))
+            ]
+
+            if len(pictures) != 6:
+                raise Exception("You must have exactly 6 pictures before creating a new member.")
+
+            name_trimmed = name.strip().split(" ")
+            values = [x for x in name_trimmed if x]
+            name = values[0] if len(values) == 1 else ""
+            surname = values[1] if len(values) == 2 else ""
+
+            try:
+                file_transfer = FileTransfer(name, surname, pictures_dir)
+                file_transfer.file_transfer()
+            except Exception as e:
+                raise Exception(e)
+
+            # Call create_new_member in UserCommands
+            self._user_commands.create_new_member(name, pictures, status, None)
+            print(f"New member {name} created with status {status}.")
+
         except Exception as e:
-            # self.message_label.setText(f"Error creating a new member")
-            print(f"Error initiating new member: {str(e)}")
-            return
-
-        # self.message_label.setText("Please wait:)")
-        time.sleep(3)
+            print(f"Error creating new member: {e}")
 
         try:
-            with open("mqtt_responses_cached/new_member_authorized.csv", "r") as file:
+            with open("mqtt_responses_cached/add_member_response.csv", "r") as file:
                 response = file.read().strip()
                 new_member_code = NewMemberResponseCodes.string_to_enum(response)
 
                 if new_member_code == NewMemberResponseCodes.OK:
                     # self.message_label.setText("New member was created!")
                     print("New member was created")
-                    # I need to update the list here???
+                    # self.members_model.add_member({"name": name, "status": status})
+                    # # Emit signal to notify QML
+                    # self.memberAdded.emit(name, status)
                 elif new_member_code == NewMemberResponseCodes.FAILED:
                     print("New member was not created")
                     # self.message_label.setText("Failed to create a new member")
@@ -271,3 +284,24 @@ class GuiBackend(QObject):
 
     def list_active_members(self):
         pass
+
+    def delete_user(self):
+        pass
+
+    def change_password(self, current_password, new_password, repeat_password):
+        if new_password != repeat_password:
+            print("Passwords do not match")
+
+    @Slot(int, int, int, int, int)
+    def get_date(self, year, month, day, hour, minute):
+        try:
+            my_date = f"{year}-{month}-{day} {hour}:{minute}:00"
+            time_format = "%Y-%m-%d %H:%M:%S"
+            timestamp = datetime.strptime(my_date, time_format)
+            with open("date/selected_datetime.txt", "w") as file:
+                file.write(timestamp.strftime("%Y-%m-%d %H:%M:%S"))
+
+            print(f"Date and Time saved: {timestamp}")
+        except ValueError as e:
+            print(f"Error creating datetime: {e}")
+

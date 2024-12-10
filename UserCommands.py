@@ -1,8 +1,12 @@
 import json
 import csv
-
+import os
+from datetime import datetime
+from data_operations.data import FileTransfer
+import paramiko
 from urllib3 import request
 
+import gui
 from util.program_codes import ResetPassword
 from PySide6.QtCore import Slot
 
@@ -28,9 +32,10 @@ class UserCommands:
         self._topic_edit_member = "change_member_data"
 
 
-        with open("/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/mqtt_responses_cached/session_token.csv", "r") as file:
+        with open("/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/mqtt_responses_cached/session_token", "r") as file:
             self._token = file.readline().strip()
 
+    #helper function for hashing the given password
     @classmethod
     def hash_password(cls, password):
         return hashlib.sha256(password.encode()).hexdigest()
@@ -41,6 +46,20 @@ class UserCommands:
         else:
             QMessageBox.information(None, "Error", "User not logged in")
             return None
+
+    def read_file_to_variable(self, file_path):
+        try:
+            with open(file_path, "r") as file:
+                content = file.read().strip()  # Read the file and strip any trailing newlines
+            return content
+        except FileNotFoundError:
+            print(f"File not found: {file_path}")
+            return None
+        except Exception as e:
+            print(f"An error occurred while reading the file: {e}")
+            return None
+
+
 
 # ------------------------------------------------------------------------------
     def login(self, username, password):
@@ -105,48 +124,41 @@ class UserCommands:
             raise e
 
 #------------------------------------------------------------------------------
-    def create_new_member(self, member_name, member_surname, path_pictures):
+    def create_new_member(self, member_name, path_pictures, status, date):
         try:
+            if len(path_pictures) != 6:
+                raise Exception("Exactly 6 pictures are required.")
 
-            # if len(pictures) != 6:
-            #     raise Exception("Exactly 6 pictures required")
+            if status.lower() == "temporary":
+                date = self.read_file_to_variable("/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/date/selected_datetime.txt")
+            else:
+                date = ""
 
             member_data = {
-                "Name": member_name,
-                "Surname": member_surname,
-                "Pictures": path_pictures,
-                # "Status":
+                "name": member_name,
+                "images_path": path_pictures,
+                "authorization": status,
+                "access_remaining_date_time": date
             }
             member_request = {"value": member_data, "session_token": self._token}
 
             member_json = json.dumps(member_request)
-
             self._mqtt_client.send_message(member_json, self._topic_ask_new_member)
+            print(f"New member {member_name} added with status {status}.")
 
         except Exception as e:
-            raise e
+            print(f"Error in create_new_member: {e}")
+            raise
 
+    #in which format should I send the date and time?
 
     #------------------------------------------------------------------------------
 
-    def change_password(self, username, old_password, new_password):
+    def change_password(self, new_password):
         try:
-            if self.hash_password(old_password) != self.get_stored_password():
-                raise Exception("Old password is incorrect")
-
-            # if len(new_password) < 8:
-            #     raise Exception("Password should be at least 8 characters")
-            #
-            # if not re.search(r'[A-Z]', new_password):
-            #     raise Exception("Password must contain at least one uppercase letter")
-            #
-            # if "ndl" not in new_password:
-            #     raise Exception("Password must contain the substring ndl")
-
             hashed_new_password = self.hash_password(new_password)
 
             new_password_data = {
-                "username": username,
                 "password": hashed_new_password
             }
 
@@ -221,7 +233,6 @@ class UserCommands:
             self._mqtt_client.send_message(change_json, self._topic_edit_member)
 
           else:
-
               change_data = {
                   "name": member_name,
                   "member_status": member_status
@@ -237,20 +248,6 @@ class UserCommands:
             raise e
     #------------------------------------------------------------------------------
 
-    def new_member(self, name, surname, pictures):
-        try:
-            new_data = {
-                "name": name,
-                "surname": surname,
-                "pictures": pictures
-            }
-            new_data_request = {"value": new_data, "session_token": self._token}
 
-            new_json = json.dumps(new_data_request)
-
-            self._mqtt_client.send_message(new_json, self._topic_ask_new_member)
-
-        except Exception as e:
-            raise e
 
 

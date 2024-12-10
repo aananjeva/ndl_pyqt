@@ -7,53 +7,7 @@ from scp import SCPClient
 
 
 class FileTransfer:
-    """
-    This class is used to transfer files from a local machine to a remote server using SSH.
-
-    :param file_path: The path of the file or directory to be transferred.
-    :param save_path: The path on the remote server where the file(s) should be saved.
-                      If None, the default save path will be used.
-
-    :ivar __ed_key: The loaded RSA key from the key.pem file.
-    :ivar __connection_credentials: A dictionary containing the host and username from credentials.csv file.
-    :ivar __default_save_path: The default save path loaded from default_save_path.csv file.
-    :ivar __ssh: The instance of SSHClient used for SSH connection.
-    :ivar __connection_established: A boolean indicating whether the connection is established or not.
-    :ivar __host: The host address of the remote server.
-    :ivar __username: The username used for SSH authentication.
-    :ivar __temp_dir: The temporary directory path for file transfer.
-    :ivar __number_of_files: The number of files in the specified file path.
-
-    Methods:
-        1. __load_rsa_key(): Private method to load the RSA key from a specified file.
-        2. __load_credentials(): Private method to load SSH credentials from credentials.csv file.
-        3. __load_default_save_path(): Private method to load the default save path from a CSV file.
-        4. __getattr__(attr): Custom attribute getter that returns the number of files if 'number_of_files' attribute is
-                            asked.
-        5. __connect(): Private method to establish the SSH connection to the server.
-        6. __find_existing_files(): Private method to find the existing files in the remote server.
-        7. tree_manager(): Method to transfer files from local machine to a remote server.
-        8. __remove_temp_dir(): Private method to remove the temporary directory on the server.
-        9. __unpack_temp_dir(): Private method to unpack the contents of a temporary directory to a specified save path.
-        10. file_transfer(): Method to transfer files from local machine to a remote server.
-        11. __remove_temp_dir(): Private method to remove the temporary directory on the server after completion
-                                 of file transfer.
-        12. __unpack_temp_dir(): Private method to unpack the contents of a temporary directory to a specified
-                                 save path on the server.
-        13. __rollback_image_index_changes(): Private method to roll back any changes made to the ImageIndex database
-                                              if an error occur during file transfer.
-        14. __rollback_image_index_logs(): Private method to roll back any changes made to the image index logs
-                                           if an error occurs during file transfer.
-        15. delete_file(): Method to delete a specified file on the server. It also deletes a pointer to the
-                           resource from the ImageIndex database.
-        16. abort(): Method to close the SSH connection and abort the operation. It rolls back any changes to ImageIndex
-                     database and logs, and removes the temporary directory.
-        17. get_image_ids: Property method to retrieve the list of image IDs that have been uploaded to the server.
-        18. delete_file(): Method to delete a specified file. (This method appears to be incomplete)
-        19. abort(): Method to close the SSH connection and abort the operation.
-    """
-
-    def __init__(self, name, surname, file_path=None, save_path=None):
+    def __init__(self, name, surname, file_path, save_path=None):
         self.__ed_key = self.__load_ed_key()
         self.__connection_credentials = self.__load_credentials()
         self.__default_save_path = self.__load_default_save_path()

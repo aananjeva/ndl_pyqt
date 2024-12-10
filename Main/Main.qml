@@ -545,8 +545,7 @@ ApplicationWindow {
                     MouseArea {
                         anchors.fill: parent  // Make the MouseArea fill the entire text area
                         onClicked: {
-                            // Handle the delete profile action here
-                            console.log("Delete Profile clicked");
+
                         }
                     }
                 }
@@ -636,11 +635,11 @@ ApplicationWindow {
                     text: "Change Password"
                     Layout.alignment: Qt.AlignHCenter
                     onClicked: {
-                        // python.on_change_password_button_click(
-                        //     currentPasswordField.text,
-                        //     newPasswordField.text,
-                        //     repeatNewPasswordField.text
-                        // )
+                        python.on_change_password_button_click(
+                            currentPasswordField.text,
+                            newPasswordField.text,
+                            repeatNewPasswordField.text
+                        )
                     }
                 }
 
@@ -938,23 +937,6 @@ ApplicationWindow {
                     }
                 }
 
-                Rectangle {
-                    width: 300
-                    height: 50
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    color: "white"
-                    border.color: "gray"
-                    border.width: 1
-
-                    TextField {
-                        id: newMemberSurnameField
-                        placeholderText: "Surname"
-                        anchors.fill: parent
-                        padding: 10
-                        font.pointSize: 18
-                        verticalAlignment: TextInput.AlignVCenter
-                    }
-                }
 
                 Button {
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
@@ -999,7 +981,10 @@ ApplicationWindow {
                     radius: 10
                 }
                 onClicked: {
-                    // console.log("Save clicked with data:", newMemberNameField.text, newMemberSurnameField.text, statusComboBox.currentText);
+                    python.new_member(
+                        newMemberNameField.text,
+                        statusComboBox.currentText
+                    )
                 }
             }
         }
@@ -1014,11 +999,29 @@ ApplicationWindow {
         height: 500
         anchors.centerIn: parent
 
-        onAccepted: {
-            console.log("Date and Time selected:", daySpinBox.value, monthSpinBox.value, yearSpinBox.value, hourSpinBox.value, minuteSpinBox.value);
-        }
-        onRejected: {
-            console.log("Date and Time selection canceled");
+        // onAccepted: {
+        //     console.log("Date and Time selected:", daySpinBox.value, monthSpinBox.value, yearSpinBox.value, hourSpinBox.value, minuteSpinBox.value);
+        // }
+        // onRejected: {
+        //     console.log("Date and Time selection canceled");
+        // }
+
+        Button {
+            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+            text: "←"  // You can replace this with an icon if you prefer
+            font.pointSize: 20
+            anchors.left: parent.left
+            anchors.top: parent.top
+            background: Rectangle {
+                color: "white"
+            }
+            onClicked: {
+                if (dateTimeDialog.visible) {
+                    dateTimeDialog.visible = false
+                } else {
+                    stackView.pop()
+                }
+            }
         }
 
         ColumnLayout {
@@ -1126,6 +1129,29 @@ ApplicationWindow {
                     font.pointSize: 16
                     verticalAlignment: Text.AlignVCenter
                 }
+
+                Button {
+                    text: "Save"
+                    font.pointSize: 18
+                    width: 150
+                    height: 50
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 20
+                    background: Rectangle {
+                        color: "gray"
+                        radius: 10
+                    }
+                    onClicked: {
+                        python.get_date(
+                            yearSpinBox.value,
+                            monthSpinBox.value,
+                            daySpinBox.value,
+                            hourSpinBox.value,
+                            minuteSpinBox.value
+                        )
+                    }
+                }
             }
         }
     }
@@ -1180,6 +1206,20 @@ ApplicationWindow {
             anchors.fill: parent
             color: "white"
 
+            Button {
+                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                text: "←"  // You can replace this with an icon if you prefer
+                font.pointSize: 20
+                anchors.left: parent.left
+                anchors.top: parent.top
+                background: Rectangle {
+                    color: "white"
+                }
+                onClicked: {
+                    stackView.pop()
+                }
+            }
+
             ColumnLayout {
                 anchors.centerIn: parent
                 spacing: 20
@@ -1217,5 +1257,12 @@ ApplicationWindow {
         }
     }
 
+    Connections {
+        target: guiBackend
+        onLoginSuccess: {
+            stackView.push(mainPage)  // Navigate to the mainPage
+        }
+    }
 
 }
+

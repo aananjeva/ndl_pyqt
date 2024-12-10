@@ -5,7 +5,7 @@ def on_new_member_response(msg):
         response = msg.payload.decode()
         new_member_code = NewMemberResponseCodes.string_to_enum(response)
         if new_member_code in NewMemberResponseCodes:
-            with open("mqtt_responses_cached/new_member_authorized.csv", "w") as file:
+            with open("mqtt_responses_cached/add_member_response.csv", "w") as file:
                 file.write(str(new_member_code))
             return True
         return False
