@@ -5,10 +5,12 @@ from shutil import move
 import cv2
 from PySide6.QtCore import QObject, Slot, QAbstractListModel, QModelIndex, Qt
 from PySide6.QtMultimedia import QMediaCaptureSession, QImageCapture
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QMessageBox, QPushButton
+from pyqttoast import Toast, ToastPreset
 
 from data_operations.data import FileTransfer
 from mqtt import MQTTServer
+from program_codes.general_commands_response_codes import ResponseCodes
 from program_codes.login_response_codes import LoginResponseCodes
 from PySide6.QtMultimedia import QCamera
 from program_codes.new_member_response_codes import NewMemberResponseCodes
@@ -16,6 +18,8 @@ from program_codes.register_response_codes import RegisterResponseCodes
 from UserCommands import UserCommands
 from PySide6.QtCore import Property, Signal
 from datetime import datetime
+from loguru import logger
+
 
 class MembersModel(QAbstractListModel):
     def __init__(self, members=None):
@@ -38,7 +42,7 @@ class MembersModel(QAbstractListModel):
 
 class GuiBackend(QObject):
     pictureCountChanged = Signal()
-    loginSuccess = Signal()
+    onLoginSuccess = Signal()
     # notificationSignal = Signal(str)
     def __init__(self, mqtt: MQTTServer):
         super().__init__()
@@ -49,7 +53,6 @@ class GuiBackend(QObject):
         if not os.path.exists(self.pictures_dir):
             os.makedirs(self.pictures_dir)
 
-        #new:
         # Camera setup
         self.camera = QCamera()
         self.capture_session = QMediaCaptureSession()
@@ -58,6 +61,20 @@ class GuiBackend(QObject):
         # Configure capture session
         self.capture_session.setCamera(self.camera)
         self.capture_session.setImageCapture(self.image_capture)
+
+    # def show_toast(self, title, text, preset=ToastPreset.SUCCESS, duration=3000):
+    #     from PySide6.QtWidgets import QApplication
+    #
+    #     # Ensure a QApplication exists
+    #     if QApplication.instance() is None:
+    #         raise RuntimeError("QApplication must be created before using show_toast.")
+    #
+    #     toast = Toast()
+    #     toast.setTitle(title)
+    #     toast.setText(text)
+    #     toast.applyPreset(preset)
+    #     toast.setDuration(duration)
+    #     toast.show()
 
     @Slot()
     def start_camera(self):
@@ -95,8 +112,6 @@ class GuiBackend(QObject):
             cap.release()
             cv2.destroyAllWindows()
 
-
-
     @Slot()
     def check_completion(self):
         """Verify if 6 pictures have been taken."""
@@ -104,7 +119,6 @@ class GuiBackend(QObject):
             print(f"Only {self.picture_count}/6 pictures taken.")
         else:
             print("All 6 pictures have been taken.")
-
 
     def set_picture_count(self, count):
         if self._picture_count != count:
@@ -147,15 +161,15 @@ class GuiBackend(QObject):
         else:
             QMessageBox.information(None, "Complete", "You have taken all 6 pictures!")
 
-
-
     @Slot(str, str)
-    def login(self, username, password):
+    def login_button(self, username, password):
         # call login from UserCommands
         try:
+            with open("mqtt_responses_cached/login_authorized.csv", "w") as file:
+                file.write("")
             self._user_commands.login(username, password)
         except Exception as e:
-            print(f"Error initiating login: {str(e)}")
+            logger.debug(f"Error initiating login: {str(e)}")
             return
 
         # sleep(3) "Please wait"
@@ -166,26 +180,29 @@ class GuiBackend(QObject):
         try:
             with open("mqtt_responses_cached/login_authorized.csv", "r") as file:
                 response = file.read().strip()
-                login_code = LoginResponseCodes.string_to_enum(response)
 
-                if login_code == LoginResponseCodes.OK:
-                    print("Login successful")
-                    # self.notificationSignal.emit("Login successful")
-                    self.loginSuccess.emit()
-                elif login_code == LoginResponseCodes.FAILED:
-                    print("Login failed")
-                    # self.notificationSignal.emit("Login failed")
-                    # self.show_notification(self, "Login failed")
-                    # self.stack_view.push("mainPage")
-                else:
-                    # self.show_notification(self, "Please try again")
-                    print("Please try again")
+            try:
+                login_code = LoginResponseCodes.string_to_enum(response)
+            except Exception:
+                login_code = LoginResponseCodes.FAILED
+
+            match login_code:
+                case LoginResponseCodes.OK:
+                    logger.debug("Login successful")
+                    #go to mainPage
+
+                case LoginResponseCodes.FAILED:
+                    logger.debug("Login failed")
+                    #popup notification
+
+                case _:
+                    logger.debug("Please try again")
 
         except Exception as e:
-            raise e
+            logger.debug(f"Error reading login response: {str(e)}")
 
     @Slot(str, str, str)
-    def register(self, username, password, repeat_password):
+    def register_button(self, username, password, repeat_password):
         try:
             self._user_commands.register(username, password, repeat_password)
         except Exception as e:
@@ -203,25 +220,37 @@ class GuiBackend(QObject):
                 register_code = RegisterResponseCodes.string_to_enum(response)
 
                 if register_code == RegisterResponseCodes.OK:
-                    print("Registration successful")
+                    logger.debug("Registration successful")
                     # self.show_notification(self, "Registration successful")
                     self.stackView.push(self.mainPage)
                 elif register_code == RegisterResponseCodes.FAILED:
-                    print("Registration failed")
+                    logger.debug("Registration failed")
                     # self.show_notification(self, "Registration failed")
                 else:
                     # self.show_notification(self, "Please try again")
-                    print("Please try again")
+                    logger.debug("Please try again")
 
         except Exception as e:
             raise e
 
+    @Slot()
+    def forgot_password_button(self, msg):
+        try:
+            self._user_commands.forgot_password()
+        except Exception as e:
+            logger.debug("Please press the button again")
 
-    def forgot_password(self):
-        pass
+        try:
+            response = msg.payload.decode()
+            if response.lower() == "ok":
+                self._user_commands.forgot_password()
+            else:
+                logger.debug("Please press the button again")
+        except Exception as e:
+            raise e
 
     @Slot(str, str)
-    def new_member(self, name, status):
+    def new_member_button(self, name, status):
         try:
             pictures_dir = "/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/images"
             pictures = [
@@ -246,54 +275,78 @@ class GuiBackend(QObject):
 
             # Call create_new_member in UserCommands
             self._user_commands.create_new_member(name, pictures, status, None)
-            print(f"New member {name} created with status {status}.")
+            logger.debug(f"New member {name} created with status {status}.")
 
         except Exception as e:
-            print(f"Error creating new member: {e}")
+            logger.debug(f"Error creating new member: {e}")
 
         try:
-            with open("mqtt_responses_cached/add_member_response.csv", "r") as file:
+            with open("mqtt_responses_cached/add_member_authorized.csv", "r") as file:
                 response = file.read().strip()
                 new_member_code = NewMemberResponseCodes.string_to_enum(response)
 
                 if new_member_code == NewMemberResponseCodes.OK:
                     # self.message_label.setText("New member was created!")
-                    print("New member was created")
+                    logger.debug("New member was created")
                     # self.members_model.add_member({"name": name, "status": status})
                     # # Emit signal to notify QML
                     # self.memberAdded.emit(name, status)
                 elif new_member_code == NewMemberResponseCodes.FAILED:
-                    print("New member was not created")
+                    logger.debug("New member was not created")
                     # self.message_label.setText("Failed to create a new member")
                 else:
-                    print("Please try again")
+                    logger.debug("Please try again")
                     # self.message_label.setText("Please try again")
 
         except Exception as e:
             raise e
 
 
-    def edit_member(self):
+    def edit_member_button(self):
         pass
 
-    def delete_member(self):
+
+    def delete_member_button(self):
         pass
 
-    def list_all_members(self):
+    def list_all_members_gui(self):
         pass
 
-    def list_active_members(self):
+    def list_active_members_gui(self):
         pass
 
-    def delete_user(self):
-        pass
 
-    def change_password(self, current_password, new_password, repeat_password):
-        if new_password != repeat_password:
-            print("Passwords do not match")
+
+    #here I check the general_commands_authorized file
+    @Slot(str, str, str)
+    def change_password_button(self, current_password, new_password, repeat_password, msg):
+        try:
+            real_password = self._user_commands.get_current_password()
+            hash_current_password = self._user_commands.hash_password(current_password)
+            if real_password != hash_current_password:
+                logger.debug("The entered password is wrong")
+
+            if new_password != repeat_password:
+                logger.debug("Passwords do not match")
+
+            self._user_commands.change_password(new_password)
+            logger.debug(f"Password has been changed")
+
+        except Exception as e:
+            logger.debug(f"Error changing password: {e}")
+
+        try:
+            response = msg.payload.decode()
+            if response.lower() == "ok":
+                logger.debug("The password has been changed")
+            else:
+                logger.debug("Please try again")
+
+        except Exception as e:
+            raise e
 
     @Slot(int, int, int, int, int)
-    def get_date(self, year, month, day, hour, minute):
+    def get_date_button(self, year, month, day, hour, minute):
         try:
             my_date = f"{year}-{month}-{day} {hour}:{minute}:00"
             time_format = "%Y-%m-%d %H:%M:%S"
@@ -301,7 +354,7 @@ class GuiBackend(QObject):
             with open("date/selected_datetime.txt", "w") as file:
                 file.write(timestamp.strftime("%Y-%m-%d %H:%M:%S"))
 
-            print(f"Date and Time saved: {timestamp}")
+            logger.debug(f"Date and Time saved: {timestamp}")
         except ValueError as e:
-            print(f"Error creating datetime: {e}")
+            logger.debug(f"Error creating datetime: {e}")
 

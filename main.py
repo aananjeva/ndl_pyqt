@@ -66,17 +66,6 @@ class SmartLockSystem:
         UserCommands.new_member(username, pictures)
 
 if __name__ == "__main__":
-    # smart_lock_system = SmartLockSystem()
-    # try:
-    #     while True:
-    #         pass
-    # except KeyboardInterrupt:
-    #     print("Exiting...")
-    #     smart_lock_system.client.loop_stop()
-
-
-    # ---------------------------------------------------------------------------------------------------
-
     # trying to run the app
     # Create the QApplication instance
     # Initialize the MQTT server

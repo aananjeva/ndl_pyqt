@@ -30,22 +30,25 @@ class UserCommands:
         self._topic_ask_active_members = "active_members"
         self._topic_delete_member = "delete_member"
         self._topic_edit_member = "change_member_data"
+        self._topic_delete_user = "delete_user"
 
 
         with open("/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/mqtt_responses_cached/session_token", "r") as file:
             self._token = file.readline().strip()
+
 
     #helper function for hashing the given password
     @classmethod
     def hash_password(cls, password):
         return hashlib.sha256(password.encode()).hexdigest()
 
-    def get_current_username(self):
-        if self.current_user:
-            return self.current_user
+
+
+    def get_current_password(self):
+        if self._stored_password:
+            return self._stored_password
         else:
-            QMessageBox.information(None, "Error", "User not logged in")
-            return None
+            print("There is no password stored")
 
     def read_file_to_variable(self, file_path):
         try:
@@ -81,10 +84,14 @@ class UserCommands:
             raise e
 
     # ------------------------------------------------------------------------------
-    #TODO to finish this one
+    #TODO to check
     def forgot_password(self):
         try:
-            self._mqtt_client.send_message(ResetPassword.RESET, self._topic_ask_press_button)
+            forgot_password_request = {"value": ResetPassword.RESET, "session_token": self._token}
+
+            forgot_password_json = json.dumps(forgot_password_request)
+
+            self._mqtt_client.send_message(forgot_password_json, self._topic_ask_press_button)
         except Exception as e:
             raise e
 
@@ -120,6 +127,8 @@ class UserCommands:
 
             self._mqtt_client.send_message(register_json, self._topic_ask_reg)
 
+            self._stored_password = hashed_password
+
         except Exception as e:
             raise e
 
@@ -150,7 +159,6 @@ class UserCommands:
             print(f"Error in create_new_member: {e}")
             raise
 
-    #in which format should I send the date and time?
 
     #------------------------------------------------------------------------------
 
@@ -216,26 +224,40 @@ class UserCommands:
         except Exception as e:
             raise e
 
+    def delete_user(self, user_name):
+        try:
+            delete_data = {
+                "username": user_name
+            }
+
+            delete_request = {"value": delete_data, "session_token": self._token}
+            delete_json = json.dumps(delete_request)
+            self._mqtt_client.send_message(delete_json, self._topic_delete_user)
+
+        except Exception as e:
+            raise e
 
     #------------------------------------------------------------------------------
-    #TODO to add token
     @Slot(str, str, bool)
-    def change_member(self, member_name, new_member_name, member_status):
+    def change_member(self, member_name, new_member_name, member_status, date):
         try:
           if new_member_name.strip():
 
             change_data = {
                 "name": member_name,
-                "new_member_name": new_member_name
+                "new_member_name": new_member_name,
+                "authorization": member_status,
+                "access_remaining_date_time": date
             }
-
-            change_json = json.dumps(change_data)
+            change_request = {"value": change_data, "session_token": self._token}
+            change_json = json.dumps(change_request)
             self._mqtt_client.send_message(change_json, self._topic_edit_member)
 
           else:
               change_data = {
-                  "name": member_name,
+                  "name": "", #is it right? ASKJ
                   "member_status": member_status
+
               }
 
               change_json = json.dumps(change_data)

@@ -123,7 +123,7 @@ ApplicationWindow {
                         Layout.preferredWidth: 300
                         Layout.preferredHeight: 50
                         onClicked: {
-                            python.login(
+                            python.login_button(
                                 usernameField.text,
                                 passwordField.text
                             )
@@ -140,6 +140,7 @@ ApplicationWindow {
                             anchors.fill: parent
                             onClicked: {
                                 stackView.push(defaultPasswordPage)
+                                // python.forgot_password_button()
                             }
                         }
                     }
@@ -366,7 +367,7 @@ ApplicationWindow {
 
                     Layout.alignment: Qt.AlignHCenter
                     onClicked: {
-                        python.register(
+                        python.register_button(
                             registerUsernameField.text,
                             registerPasswordField.text,
                             repeatPasswordField.text
@@ -458,7 +459,6 @@ ApplicationWindow {
                 RowLayout {
                     Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
 
-
                     Button {
                         icon.source: "/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/.venv/images/home.png"
                         icon.width: 35
@@ -536,19 +536,6 @@ ApplicationWindow {
                         }
                     }
                 }
-
-                Text {
-                    text: "Delete a profile"
-                    font.pointSize: 18
-                    color: "black"  // Change color to indicate it's clickable
-                    Layout.alignment: Qt.AlignLeft
-                    MouseArea {
-                        anchors.fill: parent  // Make the MouseArea fill the entire text area
-                        onClicked: {
-
-                        }
-                    }
-                }
             }
         }
     }
@@ -563,11 +550,12 @@ ApplicationWindow {
 
         Rectangle {
             anchors.fill: parent
+            color: "lightgray"  // Optional: Background color for the dialog
 
             ColumnLayout {
                 anchors.fill: parent
                 spacing: 10
-                anchors.margins: 20  // Add some padding inside the dialog
+                anchors.margins: 20  // Add padding inside the dialog
 
                 Text {
                     text: "Change Password"
@@ -575,67 +563,41 @@ ApplicationWindow {
                     font.bold: true
                     color: "black"
                     horizontalAlignment: Text.AlignHCenter
+                    Layout.alignment: Qt.AlignHCenter
                 }
 
-                Rectangle {
-                    width: parent.width
-                    height: 50
-                    color: "white"
-                    border.color: "gray"
-                    border.width: 1
-
-                    TextField {
-                        id: currentPasswordField
-                        placeholderText: "Current password"
-                        anchors.fill: parent
-                        padding: 10
-                        font.pointSize: 18
-                        echoMode: TextInput.Password
-                        verticalAlignment: TextInput.AlignVCenter
-                    }
+                TextField {
+                    id: currentPasswordField
+                    placeholderText: "Current password"
+                    Layout.fillWidth: true
+                    font.pointSize: 18
+                    echoMode: TextInput.Password
+                    verticalAlignment: TextInput.AlignVCenter
                 }
 
-                Rectangle {
-                    width: parent.width
-                    height: 50
-                    color: "white"
-                    border.color: "gray"
-                    border.width: 1
-
-                    TextField {
-                        id: newPasswordField
-                        placeholderText: "New password"
-                        anchors.fill: parent
-                        padding: 10
-                        font.pointSize: 18
-                        echoMode: TextInput.Password
-                        verticalAlignment: TextInput.AlignVCenter
-                    }
+                TextField {
+                    id: newPasswordField
+                    placeholderText: "New password"
+                    Layout.fillWidth: true
+                    font.pointSize: 18
+                    echoMode: TextInput.Password
+                    verticalAlignment: TextInput.AlignVCenter
                 }
 
-                Rectangle {
-                    width: parent.width
-                    height: 50
-                    color: "white"
-                    border.color: "gray"
-                    border.width: 1
-
-                    TextField {
-                        id: repeatNewPasswordField
-                        placeholderText: "Repeat new password"
-                        anchors.fill: parent
-                        padding: 10
-                        font.pointSize: 18
-                        echoMode: TextInput.Password
-                        verticalAlignment: TextInput.AlignVCenter
-                    }
+                TextField {
+                    id: repeatNewPasswordField
+                    placeholderText: "Repeat new password"
+                    Layout.fillWidth: true
+                    font.pointSize: 18
+                    echoMode: TextInput.Password
+                    verticalAlignment: TextInput.AlignVCenter
                 }
 
                 Button {
                     text: "Change Password"
                     Layout.alignment: Qt.AlignHCenter
                     onClicked: {
-                        python.on_change_password_button_click(
+                        python.change_password_button(
                             currentPasswordField.text,
                             newPasswordField.text,
                             repeatNewPasswordField.text
@@ -777,6 +739,7 @@ ApplicationWindow {
         width: 400
         height: 599
         anchors.centerIn: parent
+        property string userName: ""
 
         Rectangle {
             id: overlay2
@@ -788,11 +751,13 @@ ApplicationWindow {
         ColumnLayout {
             spacing: 10
 
+            // Member Name Display
             Text {
                 Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                 id: editUserText
                 font.pointSize: 20
                 horizontalAlignment: Text.AlignHCenter
+                text: "Editing: " + userName
             }
 
             // Field for editing the member name
@@ -815,7 +780,7 @@ ApplicationWindow {
                 }
             }
 
-            // Dropdown or switch to change status (e.g., In/Out or Access/No Access)
+            // Dropdown for Status
             RowLayout {
                 spacing: 10
                 Text {
@@ -825,11 +790,12 @@ ApplicationWindow {
                 }
                 ComboBox {
                     id: statusComboBox
-                    model: ["In", "Out"]  // You can use this to set the status
+                    model: ["", "Active", "Temporary"]
                     currentIndex: 0
                 }
             }
 
+            // Save Button
             Button {
                 text: "Save"
                 width: 100
@@ -844,16 +810,11 @@ ApplicationWindow {
                 Layout.alignment: Qt.AlignHCenter
 
                 onClicked: {
-                    // var newName = editUserField.text
-                    // var newStatus = statusComboBox.currentText
-                    //
-                    // python.change_member(editUserDialog.userName, newName)
-                    // python.change_member_status(editUserDialog.userName, newStatus === "In")
-                    //
-                    // editUserDialog.close()
+                    python.edit_user_button(editUserField.text, statusComboBox.currentText);
                 }
             }
 
+            // Cancel Button
             Text {
                 id: cancelButton
                 text: "Cancel"
@@ -863,15 +824,15 @@ ApplicationWindow {
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
-                        editUserDialog.close()
+                        editUserDialog.close();
                     }
                 }
             }
         }
 
+        // Update fields dynamically when the dialog is opened
         onOpened: {
-            editUserText.text = "Editing: " + editUserDialog.userName
-            editUserField.text = editUserDialog.userName
+            editUserField.text = userName;
         }
     }
 
@@ -981,7 +942,7 @@ ApplicationWindow {
                     radius: 10
                 }
                 onClicked: {
-                    python.new_member(
+                    python.new_member_button(
                         newMemberNameField.text,
                         statusComboBox.currentText
                     )
@@ -1143,7 +1104,7 @@ ApplicationWindow {
                         radius: 10
                     }
                     onClicked: {
-                        python.get_date(
+                        python.get_date_button(
                             yearSpinBox.value,
                             monthSpinBox.value,
                             daySpinBox.value,
@@ -1156,48 +1117,6 @@ ApplicationWindow {
         }
     }
 
-    // Component {
-    //     id: addPicturesPage
-    //
-    //     Rectangle {
-    //         anchors.fill: parent
-    //         color: "white"
-    //
-    //         ColumnLayout {
-    //             anchors.centerIn: parent
-    //             spacing: 20
-    //
-    //             Text {
-    //                 text: "Please take 6 pictures using your device camera."
-    //                 font.pointSize: 18
-    //                 font.bold: true
-    //                 color: "black"
-    //                 horizontalAlignment: Text.AlignHCenter
-    //             }
-    //
-    //             Button {
-    //                 text: "Move Pictures"
-    //                 onClicked: {
-    //                 python.move_pictures_to_app_folder()
-    //                 }
-    //             }
-    //
-    //             Button {
-    //                 text: "Open Camera"
-    //                 onClicked: {
-    //                     python.open_device_camera()
-    //                 }
-    //             }
-    //
-    //             Button {
-    //                 text: "Finish"
-    //                 onClicked: {
-    //                     python.check_picture_completion()  // Verify picture completion in Python
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
 
     Component {
         id: cameraPage
@@ -1257,12 +1176,6 @@ ApplicationWindow {
         }
     }
 
-    Connections {
-        target: guiBackend
-        onLoginSuccess: {
-            stackView.push(mainPage)  // Navigate to the mainPage
-        }
-    }
 
 }
 
