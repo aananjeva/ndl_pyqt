@@ -1,35 +1,40 @@
-// import QtQuick 2.15
-// import QtQuick.Controls 2.15
-//
-// Rectangle {
-//     id: notification
-//     width: parent.width
-//     height: 50
-//     anchors.horizontalCenter: parent.horizontalCenter
-//     color: "lightblue"
-//     radius: 10
-//     visible: false
-//     opacity: 0.9
-//
-//     Text {
-//         id: messageText
-//         anchors.centerIn: parent
-//         text: ""
-//         color: "black"
-//         font.pixelSize: 16
-//     }
-//
-//     Timer {
-//         id: hideTimer
-//         interval: 3000  // Display for 3 seconds
-//         running: false
-//         repeat: false
-//         onTriggered: notification.visible = false
-//     }
-//
-//     function show(msg) {
-//         messageText.text = msg;
-//         notification.visible = true;
-//         hideTimer.start();
-//     }
-// }
+// Notification.qml
+import QtQuick 6.0
+import QtQuick.Controls 6.0
+
+Rectangle {
+    id: notification
+    width: parent.width * 0.5
+    height: 30
+    radius: 10
+    color: "gray"
+    opacity: 0
+    visible: false
+    anchors.horizontalCenter: parent.horizontalCenter
+    anchors.bottom: parent.bottom
+    anchors.bottomMargin: 20
+
+    Text {
+        id: notificationText
+        text: ""
+        anchors.centerIn: parent
+        color: "white"
+        font.pixelSize: 13
+    }
+
+    // Animation to fade in and out
+    SequentialAnimation {
+        id: showAnimation
+        PauseAnimation { duration: 200 } // Delay before showing
+        PropertyAnimation { target: notification; property: "opacity"; to: 1; duration: 500 }
+        PauseAnimation { duration: 3000 } // Duration the notification stays visible
+        PropertyAnimation { target: notification; property: "opacity"; to: 0; duration: 500 }
+        onFinished: notification.visible = false
+    }
+
+    function show(message) {
+        notificationText.text = message
+        visible = true
+        showAnimation.start()
+    }
+}

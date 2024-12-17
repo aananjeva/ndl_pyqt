@@ -1,7 +1,10 @@
 import json
 import csv
 import os
+import re
 from datetime import datetime
+from venv import logger
+
 from data_operations.data import FileTransfer
 import paramiko
 from urllib3 import request
@@ -42,13 +45,17 @@ class UserCommands:
     def hash_password(cls, password):
         return hashlib.sha256(password.encode()).hexdigest()
 
-
+    def get_username(self):
+        if self._current_user:
+            return self._current_user
+        else:
+            logger.debug("No username found")
 
     def get_current_password(self):
         if self._stored_password:
             return self._stored_password
         else:
-            print("There is no password stored")
+            logger.debug("There is no password stored")
 
     def read_file_to_variable(self, file_path):
         try:
@@ -56,13 +63,11 @@ class UserCommands:
                 content = file.read().strip()  # Read the file and strip any trailing newlines
             return content
         except FileNotFoundError:
-            print(f"File not found: {file_path}")
+            logger.debug(f"File not found: {file_path}")
             return None
         except Exception as e:
-            print(f"An error occurred while reading the file: {e}")
+            logger.debug(f"An error occurred while reading the file: {e}")
             return None
-
-
 
 # ------------------------------------------------------------------------------
     def login(self, username, password):
@@ -72,6 +77,7 @@ class UserCommands:
 
             hashed_password = self.hash_password(password)
             self._stored_password = hashed_password
+            self._current_user = username
             login_data = {
                 "username": username,
                 "password": hashed_password
@@ -93,12 +99,12 @@ class UserCommands:
 
             self._mqtt_client.send_message(forgot_password_json, self._topic_ask_press_button)
         except Exception as e:
-            raise e
+            logger.debug("Failed to send forgot password message")
 
     #------------------------------------------------------------------------------
     def register(self, username, password, repeat_password):
         try:
-            if not username or not password:
+            if not username or not password or not repeat_password:
                 raise Exception("Username and password cannot be empty")
 
             if password != repeat_password:
@@ -112,7 +118,7 @@ class UserCommands:
             #
             # if "ndl" not in password:
             #     raise Exception("Password must contain the substring ndl")
-
+            #
 
             hashed_password = self.hash_password(password)
 
@@ -121,7 +127,9 @@ class UserCommands:
                 "password": hashed_password,
             }
 
-            register_request = {"value": register_data, "session_token": self._token}
+            register_data_json = json.dumps(register_data)
+
+            register_request = {"value": register_data_json, "session_token": self._token}
 
             register_json = json.dumps(register_request)
 
@@ -149,7 +157,9 @@ class UserCommands:
                 "authorization": status,
                 "access_remaining_date_time": date
             }
-            member_request = {"value": member_data, "session_token": self._token}
+            member_data_json = json.dumps(member_data)
+
+            member_request = {"value": member_data_json, "session_token": self._token}
 
             member_json = json.dumps(member_request)
             self._mqtt_client.send_message(member_json, self._topic_ask_new_member)
@@ -158,7 +168,6 @@ class UserCommands:
         except Exception as e:
             print(f"Error in create_new_member: {e}")
             raise
-
 
     #------------------------------------------------------------------------------
 
@@ -170,7 +179,9 @@ class UserCommands:
                 "password": hashed_new_password
             }
 
-            new_password_request = {"value": new_password_data, "session_token": self._token}
+            new_password_data_json = json.dumps(new_password_data)
+
+            new_password_request = {"value": new_password_data_json, "session_token": self._token}
 
             new_password_json = json.dumps(new_password_request)
 
@@ -193,7 +204,9 @@ class UserCommands:
     #TODO to add token
     def active_members(self):
         try:
-            self._mqtt_client.send_message("list_active", self._topic_ask_active_members)
+            active_members_request = {"value": self._topic_ask_all_members, "session_token": self._token}
+            active_members_data_json = json.dumps(active_members_request)
+            self._mqtt_client.send_message(active_members_data_json, self._topic_ask_active_members)
         except Exception as e:
             raise e
 
@@ -201,7 +214,9 @@ class UserCommands:
     #TODO to add token
     def all_members(self):
         try:
-            self._mqtt_client.send_message("list_all", self._topic_ask_all_members)
+            all_members_request = {"value": "", "session_token": self._token}
+            all_members_data_json = json.dumps(all_members_request)
+            self._mqtt_client.send_message(all_members_data_json, self._topic_ask_all_members)
 
         except Exception as e:
             raise e
@@ -214,25 +229,13 @@ class UserCommands:
             delete_data = {
                 "name": member_name
             }
+            delete_data_json = json.dumps(delete_data)
 
-            delete_request = {"value": delete_data, "session_token": self._token}
+            delete_request = {"value": delete_data_json, "session_token": self._token}
 
             delete_json = json.dumps(delete_request)
 
             self._mqtt_client.send_message(delete_json, self._topic_delete_member)
-
-        except Exception as e:
-            raise e
-
-    def delete_user(self, user_name):
-        try:
-            delete_data = {
-                "username": user_name
-            }
-
-            delete_request = {"value": delete_data, "session_token": self._token}
-            delete_json = json.dumps(delete_request)
-            self._mqtt_client.send_message(delete_json, self._topic_delete_user)
 
         except Exception as e:
             raise e
@@ -249,7 +252,8 @@ class UserCommands:
                 "authorization": member_status,
                 "access_remaining_date_time": date
             }
-            change_request = {"value": change_data, "session_token": self._token}
+            change_data_json = json.dumps(change_data)
+            change_request = {"value": change_data_json, "session_token": self._token}
             change_json = json.dumps(change_request)
             self._mqtt_client.send_message(change_json, self._topic_edit_member)
 
@@ -259,7 +263,6 @@ class UserCommands:
                   "member_status": member_status
 
               }
-
               change_json = json.dumps(change_data)
               self.member_name = member_name
               self.member_has_access = member_status

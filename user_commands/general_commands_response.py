@@ -1,4 +1,4 @@
-from http.client import responses
+import json
 
 from program_codes.general_commands_response_codes import  ResponseCodes
 
@@ -11,7 +11,9 @@ def on_general_commands_response(msg):
                 file.write(str(general_commands_code))
             return True
         return False
-    except Exception as e:
+    except json.JSONDecodeError:
+        print("Failed to decode the response as JSON.")
+        file.write("FAILED")
         return False
 
 

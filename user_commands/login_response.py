@@ -1,4 +1,5 @@
 import json
+from venv import logger
 
 from program_codes.login_response_codes import LoginResponseCodes
 
@@ -22,7 +23,7 @@ def on_login_response(msg: str):
 
         return True
     except json.JSONDecodeError:
-        print("Failed to decode the response as JSON.")
+        logger.debug("Failed to decode the response as JSON.")
         file.write("FAILED")
         return False
 

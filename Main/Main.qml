@@ -20,18 +20,34 @@ ApplicationWindow {
         initialItem: introPage
     }
 
-    // Notification {
-    //     id: notification
-    //     anchors.bottom: parent.bottom
-    //     anchors.horizontalCenter: parent.horizontalCenter
-    //     width: parent.width * 0.8
-    // }
-    //
-    // Connections {
-    //     target: guiBackend
-    //     onNotificationSignal: notification.show(message)
-    // }
+    Notification {
+        id: notification
+    }
 
+    ListModel {
+        id: membersModel
+    }
+
+    Connections {
+        target: python
+        onOnLoginSuccess: {
+            stackView.push(mainPage)
+            python.list_active_members_gui()
+        }
+        onOnRegisterSuccess: {
+            stackView.push(mainPage)
+            python.list_active_members_gui()
+        }
+        onMembersUpdated: function (members) {
+            membersModel.clear();
+            for (let i = 0; i < members.length; i++) {
+                membersModel.append(members[i]);
+            }
+        }
+        onNotificationSignal: function (message) {
+            notification.show(message);
+        }
+    }
 
     Component {
         id: introPage
@@ -243,16 +259,10 @@ ApplicationWindow {
 
                 Button {
                     text: "Enter"
-                    width: 600
-                    height: 300
-
-                    background: Rectangle {
-                        radius: 10
-                        border.color: "gray"
-                        border.width: 1
-                    }
-
-                    Layout.alignment: Qt.AlignHCenter
+                    width: 300
+                    height: 50
+                    Layout.preferredWidth: 300
+                    Layout.preferredHeight: 50
                     onClicked: {
                         stackView.push(mainPage)
                     }
@@ -355,17 +365,10 @@ ApplicationWindow {
 
                 Button {
                     text: "Register"
-                    width: 600  // Set a specific width
-                    height: 300  // Set a specific height
-
-
-                    background: Rectangle {
-                        radius: 10  // Round the corners
-                        border.color: "gray"  // Set a border color
-                        border.width: 1  // Set border width
-                    }
-
-                    Layout.alignment: Qt.AlignHCenter
+                    width: 300
+                    height: 50
+                    Layout.preferredWidth: 300
+                    Layout.preferredHeight: 50
                     onClicked: {
                         python.register_button(
                             registerUsernameField.text,
@@ -464,7 +467,10 @@ ApplicationWindow {
                         icon.width: 35
                         icon.height: 35
                         icon.color: "grey"
-                        onClicked: stackView.push()
+                        onClicked: {
+                            stackView.push()
+                            python.list_active_members_gui()
+                        }
                         width: 250
                         height: 80
                         Layout.preferredWidth: 250
@@ -477,7 +483,10 @@ ApplicationWindow {
                         icon.width: 35
                         icon.height: 35
                         icon.color: "grey"
-                        onClicked: stackView.push(membersPage)
+                        onClicked: {
+                            stackView.push(membersPage)
+                            python.list_all_members_gui()
+                        }
                         width: 250
                         height: 80
                         Layout.preferredWidth: 250
@@ -517,7 +526,7 @@ ApplicationWindow {
 
 
                 Text {
-                    text: "Username: " + username
+                    text: "Username: " + python.username()
                     font.pointSize: 18
                     color: "black"
                     Layout.alignment: Qt.AlignHCenter
@@ -536,6 +545,22 @@ ApplicationWindow {
                         }
                     }
                 }
+
+                Text {
+                    id: logoutButton
+                    text: "Logout"
+                    font.pointSize: 18
+                    color: "black"  // Change text color to indicate it's clickable
+                    Layout.alignment: Qt.AlignLeft
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            stackView.push(loginPage)
+                            settingsDialog.close()
+                        }
+                    }
+                }
+
             }
         }
     }
@@ -619,6 +644,7 @@ ApplicationWindow {
         id: activeUsersModel
     }
 
+
     Component {
         id: membersPage
 
@@ -640,41 +666,33 @@ ApplicationWindow {
                     Layout.alignment: Qt.AlignHCenter
                 }
 
+
                 // List of Users
                 ListView {
                     id: membersListView
                     width: parent.width
-                    height: 400  // Adjust the height as needed
+                    height: 400
                     model: membersModel
-
                     delegate: RowLayout {
                         spacing: 10
 
-                        // Profile Icon
                         Image {
-                            source: "/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/.venv/images/user.png"
-                            width: 24
-                            height: 24
+                            source: "/path/to/user_icon.png"
+                            width: 30
+                            height: 30
                         }
 
                         Text {
-                            text: model.name
+                            required property string name
+                            text: "Name: " + name
+                            // text: "Name: " + model.name
                             font.pointSize: 18
-                            color: "black"
                         }
 
                         Text {
-                            text: model.status
+                            text: "Status: " + model.status
                             font.pointSize: 18
-                            color: model.status === "In" ? "green" : "red"
-                        }
-
-                        Button {
-                            text: "Edit"
-                            onClicked: {
-                                console.log("Editing " + model.name)
-                                editUserDialog.open()  // Open the edit user dialog
-                            }
+                            color: model.status === "Active" ? "green" : "red"
                         }
                     }
                 }
@@ -708,6 +726,7 @@ ApplicationWindow {
                         icon.color: "grey"
                         onClicked: {
                             stackView.push(mainPage)
+                            python.list_active_members_gui()
                         }
                         width: 250
                         height: 80
@@ -720,7 +739,10 @@ ApplicationWindow {
                         icon.width: 35
                         height: 35
                         icon.color: "grey"
-                        onClicked: stackView.push()
+                        onClicked: {
+                            stackView.push()
+                            python.list_all_members_gui()
+                        }
                         Layout.preferredWidth: 250
                         Layout.preferredHeight: 80
                     }
@@ -729,9 +751,6 @@ ApplicationWindow {
         }
     }
 
-    ListModel {
-        id: membersModel
-    }
 
     Dialog {
         id: editUserDialog
@@ -960,13 +979,6 @@ ApplicationWindow {
         height: 500
         anchors.centerIn: parent
 
-        // onAccepted: {
-        //     console.log("Date and Time selected:", daySpinBox.value, monthSpinBox.value, yearSpinBox.value, hourSpinBox.value, minuteSpinBox.value);
-        // }
-        // onRejected: {
-        //     console.log("Date and Time selection canceled");
-        // }
-
         Button {
             Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
             text: "←"  // You can replace this with an icon if you prefer
@@ -1008,7 +1020,7 @@ ApplicationWindow {
 
                     SpinBox {
                         id: daySpinBox
-                        from: 1
+                        1
                         to: 31
                         value: 1
                         width: 40
@@ -1025,7 +1037,7 @@ ApplicationWindow {
 
                     SpinBox {
                         id: monthSpinBox
-                        from: 1
+                        1
                         to: 12
                         value: 1
                         width: 40
@@ -1042,7 +1054,7 @@ ApplicationWindow {
 
                     SpinBox {
                         id: yearSpinBox
-                        from: 2024
+                        2024
                         to: 2030
                         value: 2024
                         width: 60
@@ -1065,7 +1077,7 @@ ApplicationWindow {
 
                 SpinBox {
                     id: hourSpinBox
-                    from: 0
+                    0
                     to: 23
                     value: 12
                     width: 30
@@ -1079,7 +1091,7 @@ ApplicationWindow {
 
                 SpinBox {
                     id: minuteSpinBox
-                    from: 0
+                    0
                     to: 59
                     value: 0
                     width: 30

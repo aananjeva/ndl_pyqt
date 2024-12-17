@@ -30,6 +30,13 @@ class MQTTServer:
         self._client.subscribe("mqtt_responses_cached")
         self._client.subscribe("magnetic_lock")
         self._client.subscribe("login_response")
+        self._client.subscribe("register_response")
+        self._client.subscribe("forgot_password_response")
+        self._client.subscribe("list_active_members_response")
+        self._client.subscribe("all_members_response")
+        self._client.subscribe("new_member_response")
+        self._client.subscribe("delete_member_response")
+        self._client.subscribe("lock")
 
 
     @classmethod

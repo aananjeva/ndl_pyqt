@@ -19,4 +19,4 @@ class RegisterResponseCodes(Enum):
                 case _:
                     raise ValueError
         except ValueError:
-            raise Exception("No such login code.")
+            raise Exception("No such register code.")
