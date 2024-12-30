@@ -9,7 +9,6 @@ from data_operations.data import FileTransfer
 import paramiko
 from urllib3 import request
 
-import gui
 from util.program_codes import ResetPassword
 from PySide6.QtCore import Slot
 
@@ -69,7 +68,6 @@ class UserCommands:
             logger.debug(f"An error occurred while reading the file: {e}")
             return None
 
-# ------------------------------------------------------------------------------
     def login(self, username, password):
         try:
             if not username or not password:
@@ -89,19 +87,7 @@ class UserCommands:
         except Exception as e:
             raise e
 
-    # ------------------------------------------------------------------------------
-    #TODO to check
-    def forgot_password(self):
-        try:
-            forgot_password_request = {"value": ResetPassword.RESET, "session_token": self._token}
 
-            forgot_password_json = json.dumps(forgot_password_request)
-
-            self._mqtt_client.send_message(forgot_password_json, self._topic_ask_press_button)
-        except Exception as e:
-            logger.debug("Failed to send forgot password message")
-
-    #------------------------------------------------------------------------------
     def register(self, username, password, repeat_password):
         try:
             if not username or not password or not repeat_password:
@@ -110,15 +96,15 @@ class UserCommands:
             if password != repeat_password:
                 raise Exception("Passwords do not match")
 
-            # if len(password) < 8:
-            #     raise Exception("Password must be at least 8 characters")
-            #
-            # if not re.search(r'[A-Z]', password):
-            #     raise Exception("Password must contain at least one uppercase letter")
-            #
-            # if "ndl" not in password:
-            #     raise Exception("Password must contain the substring ndl")
-            #
+            if len(password) < 8:
+                raise Exception("Password must be at least 8 characters")
+
+            if not re.search(r'[A-Z]', password):
+                raise Exception("Password must contain at least one uppercase letter")
+
+            if "ndl" not in password:
+                raise Exception("Password must contain the substring ndl")
+
 
             hashed_password = self.hash_password(password)
 
@@ -140,7 +126,6 @@ class UserCommands:
         except Exception as e:
             raise e
 
-#------------------------------------------------------------------------------
     def create_new_member(self, member_name, path_pictures, status, date):
         try:
             if len(path_pictures) != 6:
@@ -169,8 +154,6 @@ class UserCommands:
             print(f"Error in create_new_member: {e}")
             raise
 
-    #------------------------------------------------------------------------------
-
     def change_password(self, new_password):
         try:
             hashed_new_password = self.hash_password(new_password)
@@ -190,7 +173,6 @@ class UserCommands:
         except Exception as e:
             raise e
 
-    #------------------------------------------------------------------------------
     #TODO to add token
     def lock_unlock(self, current_state):
         try:
@@ -200,18 +182,14 @@ class UserCommands:
         except Exception as e:
             raise e
 
-    #------------------------------------------------------------------------------
-    #TODO to add token
     def active_members(self):
         try:
-            active_members_request = {"value": self._topic_ask_all_members, "session_token": self._token}
+            active_members_request = {"value": "", "session_token": self._token}
             active_members_data_json = json.dumps(active_members_request)
             self._mqtt_client.send_message(active_members_data_json, self._topic_ask_active_members)
         except Exception as e:
             raise e
 
-    #------------------------------------------------------------------------------
-    #TODO to add token
     def all_members(self):
         try:
             all_members_request = {"value": "", "session_token": self._token}
@@ -221,9 +199,7 @@ class UserCommands:
         except Exception as e:
             raise e
 
-
-    #------------------------------------------------------------------------------
-
+    #TODO to check
     def delete_member(self, member_name):
         try:
             delete_data = {
@@ -240,8 +216,6 @@ class UserCommands:
         except Exception as e:
             raise e
 
-    #------------------------------------------------------------------------------
-    @Slot(str, str, bool)
     def change_member(self, member_name, new_member_name, member_status, date):
         try:
           if new_member_name.strip():
@@ -271,7 +245,6 @@ class UserCommands:
 
         except Exception as e:
             raise e
-    #------------------------------------------------------------------------------
 
 
 

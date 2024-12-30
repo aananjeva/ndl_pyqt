@@ -1,5 +1,3 @@
-from program_codes.list_all_members_response_codes import ListAllMembersResponseCodes
-
 
 def on_list_all_members_response(msg):
     try:

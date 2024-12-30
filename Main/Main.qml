@@ -28,27 +28,49 @@ ApplicationWindow {
         id: membersModel
     }
 
+    ListModel {
+        id: activeMembersModel
+    }
+
     Connections {
         target: python
         onOnLoginSuccess: {
             stackView.push(mainPage)
             python.list_active_members_gui()
         }
+
         onOnRegisterSuccess: {
             stackView.push(mainPage)
             python.list_active_members_gui()
         }
+
         onMembersUpdated: function (members) {
             membersModel.clear();
             for (let i = 0; i < members.length; i++) {
-                membersModel.append(members[i]);
+                membersModel.append({
+                    name: members[i].name,
+                    status: members[i].authorization
+                });
             }
         }
+
         onNotificationSignal: function (message) {
             notification.show(message);
         }
+
+        onActiveMembersUpdated: function (members) {
+            activeMembersModel.clear(); // Clear old data
+            for (let i = 0; i < members.length; i++) {
+                activeMembersModel.append({
+                    name: members[i].name,
+                    status: members[i].authorization,
+                    access_remaining: members[i].access_remaining
+                });
+            }
+        }
     }
 
+    // introPage layout
     Component {
         id: introPage
 
@@ -70,6 +92,7 @@ ApplicationWindow {
         }
     }
 
+    // loginPage layout
     Component {
         id: loginPage
 
@@ -148,7 +171,7 @@ ApplicationWindow {
 
                     Text {
                         id: forgotPasswordButton
-                        text: "Forgot the password"
+                        text: "Default Login"
                         font.pointSize: 12
                         color: "black"  // Change text color to indicate it's clickable
                         Layout.alignment: Qt.AlignHCenter
@@ -188,7 +211,7 @@ ApplicationWindow {
         }
     }
 
-
+    // defaultPasswordPage layout
     Component {
         id: defaultPasswordPage
 
@@ -271,6 +294,7 @@ ApplicationWindow {
         }
     }
 
+    // registerPage layout
     Component {
         id: registerPage
 
@@ -381,7 +405,7 @@ ApplicationWindow {
         }
     }
 
-
+    // mainPage layout
     Component {
         id: mainPage
 
@@ -436,24 +460,68 @@ ApplicationWindow {
                     Layout.alignment: Qt.AlignHCenter
                 }
 
-                ListView {
-                    id: activeUsersListView
-                    width: parent.width
-                    height: 200 // Adjust the height as needed
-                    model: activeUsersModel
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    color: "transparent"
+                    anchors.margins: 20
 
-                    delegate: RowLayout {
-                        spacing: 10
 
-                        Image {
-                            source: "/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/.venv/images/user_icon.png"
-                            width: 30
-                            height: 30
+                    ListView {
+                        id: activeMembersListView
+                        anchors.fill: parent
+                        anchors.margins: 20
+                        model: activeMembersModel
+
+                        // Add Header Row
+                        header: RowLayout {
+                            spacing: 10
+                            width: parent.width
+
+                            Text {
+                                text: "Name"
+                                font.bold: true
+                                font.pixelSize: 18
+                                Layout.alignment: Qt.AlignLeft
+                            }
+
+                            Text {
+                                text: "Status"
+                                font.bold: true
+                                font.pixelSize: 18
+                                Layout.alignment: Qt.AlignLeft
+                            }
                         }
 
-                        Text {
-                            text: model.name
-                            font.pointSize: 18
+                        delegate: RowLayout {
+                            spacing: 10
+                            width: parent.width
+                            height: 50
+
+                            // Name Column
+                            Text {
+                                text: name
+                                font.pixelSize: 16
+                                Layout.alignment: Qt.AlignLeft
+                            }
+
+                            // Status Column
+                            Rectangle {
+                                color: status === "authorized" ? "lightgreen" :
+                                        status === "temporary" ? "orange" : "lightcoral"
+                                radius: 5
+                                height: 20
+                                width: 100
+                                Layout.alignment: Qt.AlignLeft
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: status === "authorized" ? "has access" :
+                                            status === "temporary" ? "temporary" : "no access"
+                                    font.pixelSize: 14
+                                    color: "white"
+                                }
+                            }
                         }
                     }
                 }
@@ -468,7 +536,7 @@ ApplicationWindow {
                         icon.height: 35
                         icon.color: "grey"
                         onClicked: {
-                            stackView.push()
+                            stackView.push(mainPage)
                             python.list_active_members_gui()
                         }
                         width: 250
@@ -498,6 +566,7 @@ ApplicationWindow {
         }
     }
 
+    // settingsDialog layout
     Dialog {
         id: settingsDialog
         width: 400
@@ -565,6 +634,7 @@ ApplicationWindow {
         }
     }
 
+    // changePasswordDialog layout
     Dialog {
         id: changePasswordDialog
         width: 400
@@ -639,85 +709,124 @@ ApplicationWindow {
         }
     }
 
-
-    ListModel {
-        id: activeUsersModel
-    }
-
-
+    // membersPage layout
     Component {
         id: membersPage
 
         Rectangle {
-            width: parent.width
-            height: parent.height
+            anchors.fill: parent
             color: "white"
 
             ColumnLayout {
                 anchors.fill: parent
-                spacing: 20  // Space between elements
+                spacing: 20
 
+                // Title
                 Text {
                     text: "All the members"
                     font.pointSize: 24
                     font.bold: true
-                    horizontalAlignment: Text.AlignHCenter
                     color: "black"
+                    horizontalAlignment: Text.AlignHCenter
                     Layout.alignment: Qt.AlignHCenter
                 }
 
+                // Wrapper for ListView
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    color: "transparent"
+                    anchors.margins: 20
 
-                // List of Users
-                ListView {
-                    id: membersListView
-                    width: parent.width
-                    height: 400
-                    model: membersModel
-                    delegate: RowLayout {
-                        spacing: 10
 
-                        Image {
-                            source: "/path/to/user_icon.png"
-                            width: 30
-                            height: 30
+                    ListView {
+                        id: membersListView
+                        anchors.fill: parent
+                        anchors.margins: 20
+                        model: membersModel
+
+                        // Add Header Row
+                        header: RowLayout {
+                            spacing: 10
+                            width: parent.width
+
+                            Text {
+                                text: "Name"
+                                font.bold: true
+                                font.pixelSize: 18
+                                Layout.alignment: Qt.AlignLeft
+                            }
+
+                            Text {
+                                text: "Status"
+                                font.bold: true
+                                font.pixelSize: 18
+                                Layout.alignment: Qt.AlignLeft
+                            }
+
+                            Text {
+                                text: "Edit"
+                                font.bold: true
+                                font.pixelSize: 18
+                                Layout.alignment: Qt.AlignLeft
+                            }
                         }
 
-                        Text {
-                            required property string name
-                            text: "Name: " + name
-                            // text: "Name: " + model.name
-                            font.pointSize: 18
-                        }
+                        delegate: RowLayout {
+                            spacing: 10
+                            width: parent.width
+                            height: 50
 
-                        Text {
-                            text: "Status: " + model.status
-                            font.pointSize: 18
-                            color: model.status === "Active" ? "green" : "red"
-                        }
-                    }
-                }
+                            // Name Column
+                            Text {
+                                text: name
+                                font.pixelSize: 16
+                                Layout.alignment: Qt.AlignLeft
+                            }
+
+                            // Status Column
+                            Rectangle {
+                                color: status === "authorized" ? "lightgreen" :
+                                        status === "temporary" ? "orange" : "lightcoral"
+                                radius: 5
+                                height: 20
+                                width: 100
+                                Layout.alignment: Qt.AlignLeft
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: status === "authorized" ? "has access" :
+                                            status === "temporary" ? "temporary" : "no access"
+                                    font.pixelSize: 14
+                                    color: "white"
+                                }
+                            }
 
 
-                RowLayout {
-                    Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
-                    Text {
-                        id: newMemberButton
-                        text: "+"
-                        font.pointSize: 40
-                        color: "grey"
-                        Layout.alignment: Qt.AlignLeft
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                stackView.push(newMemberPage)
+                            Text {
+                                id: editMemberButton
+                                text: "✎"
+                                font.pointSize: 14
+                                color: "black"  // Change text color to indicate it's clickable
+                                Layout.alignment: Qt.AlignLeft
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: {
+                                        editUserDialog.userName = name;
+                                        editUserDialog.status = status;
+                                        editUserDialog.date = access_remaining;
+                                        editUserDialog.open(); // Opens the dialog
+                                    }
+                                }
                             }
                         }
                     }
                 }
 
-                // Bottom Navigation Bar
+                // Navigation Buttons
                 RowLayout {
                     Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
+                    spacing: 20
 
                     Button {
                         icon.source: "/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/.venv/images/home.png"
@@ -740,7 +849,7 @@ ApplicationWindow {
                         height: 35
                         icon.color: "grey"
                         onClicked: {
-                            stackView.push()
+                            stackView.push(membersPage)
                             python.list_all_members_gui()
                         }
                         Layout.preferredWidth: 250
@@ -752,13 +861,16 @@ ApplicationWindow {
     }
 
 
+    // editUserDialog layout
     Dialog {
         id: editUserDialog
         modal: true
         width: 400
-        height: 599
+        height: 400
         anchors.centerIn: parent
-        property string userName: ""
+        property string userName
+        property string status
+        property string date
 
         Rectangle {
             id: overlay2
@@ -768,49 +880,63 @@ ApplicationWindow {
         }
 
         ColumnLayout {
-            spacing: 10
+            spacing: 20
+            anchors.fill: parent
+            anchors.margins: 20
 
-            // Member Name Display
+            // Member Name
             Text {
-                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                id: editUserText
-                font.pointSize: 20
-                horizontalAlignment: Text.AlignHCenter
                 text: "Editing: " + userName
+                font.pointSize: 20
+                font.bold: true
+                Layout.alignment: Qt.AlignHCenter
             }
 
-            // Field for editing the member name
-            Rectangle {
-                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                width: 300
-                height: 50
-                color: "white"
-                border.color: "gray"
-                border.width: 1
 
-                TextField {
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    id: editUserField
-                    placeholderText: "New Name"
-                    anchors.fill: parent
-                    padding: 10
-                    font.pointSize: 18
-                    verticalAlignment: TextInput.AlignVCenter
-                }
-            }
-
-            // Dropdown for Status
+            // Current Status Display
             RowLayout {
                 spacing: 10
+                Layout.alignment: Qt.AlignLeft
+
                 Text {
-                    text: "Status:"
-                    font.pointSize: 18
+                    text: "Current Status:"
+                    font.pointSize: 16
                     color: "black"
                 }
+
+                // Current Status
+                Text {
+                    text: status
+                    font.pointSize: 16
+                    color: status === "authorized" ? "green" :
+                            status === "temporary" ? "orange" : "red"
+                    font.bold: true
+                }
+
+                // If Status is Temporary, Display the Date
+                Text {
+                    visible: status === "temporary"
+                    text: "(Valid Until: " + date + ")"
+                    font.pointSize: 14
+                    color: "gray"
+                }
+            }
+
+            // Change Status
+            RowLayout {
+                spacing: 10
+                Layout.alignment: Qt.AlignLeft
+
+                Text {
+                    text: "Change Status:"
+                    font.pointSize: 16
+                    color: "black"
+                }
+
                 ComboBox {
                     id: statusComboBox
-                    model: ["", "Active", "Temporary"]
-                    currentIndex: 0
+                    model: ["authorized", "temporary", "not authorized"]
+                    // currentText: status
                 }
             }
 
@@ -818,44 +944,46 @@ ApplicationWindow {
             Button {
                 text: "Save"
                 width: 100
-                height: 30
-                Layout.preferredWidth: 100
-                Layout.preferredHeight: 30
+                height: 40
+                Layout.alignment: Qt.AlignHCenter
                 background: Rectangle {
                     radius: 10
                     border.color: "gray"
                     border.width: 1
                 }
-                Layout.alignment: Qt.AlignHCenter
 
                 onClicked: {
-                    python.edit_user_button(editUserField.text, statusComboBox.currentText);
+                    python.edit_user_button(userName, statusComboBox.currentText);
+                    editUserDialog.close();
                 }
             }
 
             // Cancel Button
-            Text {
-                id: cancelButton
+            Button {
                 text: "Cancel"
-                font.pointSize: 12
-                color: "black"
+                width: 100
+                height: 40
                 Layout.alignment: Qt.AlignHCenter
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: {
-                        editUserDialog.close();
-                    }
+                background: Rectangle {
+                    radius: 10
+                    border.color: "gray"
+                    border.width: 1
+                }
+
+                onClicked: {
+                    editUserDialog.close();
                 }
             }
         }
 
-        // Update fields dynamically when the dialog is opened
+        // Populate fields dynamically when the dialog opens
         onOpened: {
-            editUserField.text = userName;
+            statusComboBox.currentText = status;
         }
     }
 
 
+    // newMemberPage layout
     Component {
         id: newMemberPage
 
@@ -970,6 +1098,7 @@ ApplicationWindow {
         }
     }
 
+    // dateTimeDialog layout
     Dialog {
         id: dateTimeDialog
         title: "Select Date and Time"
@@ -1018,13 +1147,13 @@ ApplicationWindow {
                         verticalAlignment: Text.AlignVCenter
                     }
 
-                    SpinBox {
-                        id: daySpinBox
-                        1
-                        to: 31
-                        value: 1
-                        width: 40
-                    }
+                    // SpinBox {
+                    //     id: daySpinBox
+                    //     1
+                    //     to: 31
+                    //     value: 1
+                    //     width: 40
+                    // }
                 }
 
                 RowLayout {
@@ -1035,13 +1164,13 @@ ApplicationWindow {
                         verticalAlignment: Text.AlignVCenter
                     }
 
-                    SpinBox {
-                        id: monthSpinBox
-                        1
-                        to: 12
-                        value: 1
-                        width: 40
-                    }
+                    // SpinBox {
+                    //     id: monthSpinBox
+                    //     1
+                    //     to: 12
+                    //     value: 1
+                    //     width: 40
+                    // }
                 }
 
                 RowLayout {
@@ -1052,13 +1181,13 @@ ApplicationWindow {
                         verticalAlignment: Text.AlignVCenter
                     }
 
-                    SpinBox {
-                        id: yearSpinBox
-                        2024
-                        to: 2030
-                        value: 2024
-                        width: 60
-                    }
+                    // SpinBox {
+                    //     id: yearSpinBox
+                    //     2024
+                    //     to: 2030
+                    //     value: 2024
+                    //     width: 60
+                    // }
                 }
 
 
@@ -1075,13 +1204,13 @@ ApplicationWindow {
                 spacing: 10
                 Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
 
-                SpinBox {
-                    id: hourSpinBox
-                    0
-                    to: 23
-                    value: 12
-                    width: 30
-                }
+                // SpinBox {
+                //     id: hourSpinBox
+                //     0
+                //     to: 23
+                //     value: 12
+                //     width: 30
+                // }
 
                 Text {
                     text: "Hour"
@@ -1089,13 +1218,13 @@ ApplicationWindow {
                     verticalAlignment: Text.AlignVCenter
                 }
 
-                SpinBox {
-                    id: minuteSpinBox
-                    0
-                    to: 59
-                    value: 0
-                    width: 30
-                }
+                // SpinBox {
+                //     id: minuteSpinBox
+                //     0
+                //     to: 59
+                //     value: 0
+                //     width: 30
+                // }
 
                 Text {
                     text: "Minutes"
@@ -1129,7 +1258,7 @@ ApplicationWindow {
         }
     }
 
-
+    // cameraPage layout
     Component {
         id: cameraPage
 
@@ -1187,7 +1316,6 @@ ApplicationWindow {
             }
         }
     }
-
 
 }
 

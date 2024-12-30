@@ -1,7 +1,9 @@
 import csv
 import json
 import os
+import re
 import time
+from lib2to3.fixes.fix_input import context
 from shutil import move
 
 import cv2
@@ -20,6 +22,10 @@ from loguru import logger
 
 
 class MembersModel(QAbstractListModel):
+    NameRole = Qt.UserRole + 1
+    StatusRole = Qt.UserRole + 2
+    AccessRemaining = Qt.UserRole + 3
+
     def __init__(self, members=None):
         super().__init__()
         self._members = members or []
@@ -30,13 +36,31 @@ class MembersModel(QAbstractListModel):
     def data(self, index, role):
         if not index.isValid():
             return None
-        if role == Qt.DisplayRole:
-            return self._members[index.row()]
+        member = self._members[index.row()]
+        if role == self.NameRole:
+            return member["name"]
+        elif role == self.StatusRole:
+            return member["authorization"]
+        elif role == self.AccessRemaining:
+            return member["access_remaining"]
+        return None
+
+    def roleNames(self):
+        return {
+            Qt.UserRole + 1: b"name",
+            Qt.UserRole + 2: b"status",
+            Qt.UserRole + 3: b"access_remaining",
+        }
 
     def add_member(self, member):
         self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount())
         self._members.append(member)
         self.endInsertRows()
+
+    def update_members(self, members):
+        self.beginResetModel()
+        self._members = members
+        self.endResetModel()
 
 class GuiBackend(QObject):
     #signals:
@@ -47,10 +71,10 @@ class GuiBackend(QObject):
     activeMembersUpdated = Signal(list)
     notificationSignal = Signal(str)
 
+
     def trigger_notification(self, message):
         self.notificationSignal.emit(message)
 
-    # notificationSignal = Signal(str)
     def __init__(self, mqtt: MQTTServer):
         super().__init__()
         self._user_commands = UserCommands(mqtt)
@@ -107,7 +131,6 @@ class GuiBackend(QObject):
 
     @Slot()
     def check_completion(self):
-        """Verify if 6 pictures have been taken."""
         if self.picture_count < 6:
             logger.debug(f"Only {self.picture_count}/6 pictures taken.")
         else:
@@ -200,12 +223,12 @@ class GuiBackend(QObject):
             if password != repeat_password:
                 self.trigger_notification("Passwords do not match")
 
-            # if len(password) < 8:
-            #     self.trigger_notification("Password must be at least 8 characters")
-            # if not re.search(r'[A-Z]', password):
-            #     self.trigger_notification("Password must contain at least one uppercase letter")
-            # if "ndl" not in password:
-            #     self.trigger_notification("Password must contain the substring ndl")
+            if len(password) < 8:
+                self.trigger_notification("Password must be at least 8 characters")
+            if not re.search(r'[A-Z]', password):
+                self.trigger_notification("Password must contain at least one uppercase letter")
+            if "ndl" not in password:
+                self.trigger_notification("Password must contain the substring ndl")
 
             with open("mqtt_responses_cached/register_authorized.csv", "w") as file:
                 file.write("")
@@ -341,22 +364,22 @@ class GuiBackend(QObject):
     def list_all_members_gui(self):
         members = []
         try:
-            try:
-                with open("mqtt_responses_cached/list_all_members_authorized.csv", "w") as file:
-                    file.write("")
-                self._user_commands.all_members()
-            except Exception as e:
-                logger.debug(f"Error reading all members: {str(e)}")
+            # try:
+            #     with open("mqtt_responses_cached/list_all_members_authorized.csv", "w") as file:
+            #         file.write("")
+            #     self._user_commands.all_members()
+            # except Exception as e:
+            #     logger.debug(f"Error reading all members: {str(e)}")
 
-            csv_file = "mqtt_responses_cached/list_all_members_authorized.csv"
+            csv_file = "/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/mqtt_responses_cached/list_all_members_authorized.csv"
 
             with open(csv_file, "r") as file:
-                reader = csv.reader(file)
-                for row in reader:
-                    json_data = json.loads(row[0])
-                    members.append(json_data)
+                members = json.load(file)
+            logger.debug(f"List all members: {members}")
+
         except Exception as e:
             logger.debug(f"Error reading csv file: {str(e)}")
+            members = []
 
         self.membersUpdated.emit(members)
 
@@ -364,20 +387,20 @@ class GuiBackend(QObject):
     def list_active_members_gui(self):
         members = []
         try:
-            try:
-                with open("mqtt_responses_cached/list_active_members_authorized.csv", "w") as file:
-                    file.write("")
-                self._user_commands.active_members()
-            except Exception as e:
-                logger.debug(f"Error reading active members: {str(e)}")
+            # try:
+            #     with open("mqtt_responses_cached/list_active_members_authorized.csv", "w") as file:
+            #         file.write("")
+            #     self._user_commands.active_members()
+            # except Exception as e:
+            #     logger.debug(f"Error reading active members: {str(e)}")
             csv_file = "mqtt_responses_cached/list_active_members_authorized.csv"
             with open(csv_file, "r") as file:
-                reader = csv.reader(file)
-                for row in reader:
-                    json_data = json.loads(row[0])
-                    members.append(json_data)
+                members = json.load(file)
+            logger.debug(f"List active members: {members}")
+
         except Exception as e:
             logger.debug(f"Error reading csv file: {str(e)}")
+            members = []
 
         self.activeMembersUpdated.emit(members)
 
@@ -423,3 +446,15 @@ class GuiBackend(QObject):
         except ValueError as e:
             logger.debug(f"Error creating datetime: {e}")
 
+    @Slot(str, str)
+    def edit_user_button(self, name, new_status):
+        try:
+            for member in self.members:
+                if member["name"] == name:
+                    member["authorization"] = new_status
+                    if new_status == "temporary":
+                        member["access_remaining"] = "2025-01-01"  # Example date
+                    break
+            self.membersUpdated.emit(self.members)
+        except Exception as e:
+            logger.error(f"Error updating user: {str(e)}")

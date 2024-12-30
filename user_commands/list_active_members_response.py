@@ -1,13 +1,10 @@
-from program_codes.list_active_members_response_codes import ListActiveMembersResponseCodes
-
 
 def on_list_active_members_response(msg):
     try:
         response = msg
-        list_active_members_codes = ListActiveMembersResponseCodes.string_to_enum(response)
-        if list_active_members_codes in ListActiveMembersResponseCodes:
+        if response:
             with open("mqtt_responses_cached/list_active_members_authorized.csv", "w") as file:
-                file.write(str(list_active_members_codes))
+                file.write(str(response))
             return True
         return False
 
