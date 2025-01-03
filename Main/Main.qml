@@ -13,6 +13,8 @@ ApplicationWindow {
     height: 750
     visible: true
     title: "SmartLock"
+    // property string username: ""
+
 
     StackView {
         id: stackView
@@ -49,7 +51,8 @@ ApplicationWindow {
             for (let i = 0; i < members.length; i++) {
                 membersModel.append({
                     name: members[i].name,
-                    status: members[i].authorization
+                    status: members[i].authorization,
+                    access_remaining: members[i].access_remaining
                 });
             }
         }
@@ -59,15 +62,21 @@ ApplicationWindow {
         }
 
         onActiveMembersUpdated: function (members) {
-            activeMembersModel.clear(); // Clear old data
+            activeMembersModel.clear();
             for (let i = 0; i < members.length; i++) {
                 activeMembersModel.append({
                     name: members[i].name,
-                    status: members[i].authorization,
-                    access_remaining: members[i].access_remaining
+                    status: members[i].authorization
                 });
             }
         }
+        onPictureCountChanged: {
+            pictureCountDisplay.text = "Has been taken " + backend.pictureCount + "/6 pictures";
+            finishButton.enabled = backend.pictureCount === 6;
+        }
+        // onUsernameSignal: {
+        //     username = python.username() // Update the property with the emitted username
+        // }
     }
 
     // introPage layout
@@ -240,6 +249,7 @@ ApplicationWindow {
 
                 Text {
                     text: "Default Login"
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                     font.pointSize: 24
                     font.bold: true
                     color: "black"
@@ -288,6 +298,7 @@ ApplicationWindow {
                     Layout.preferredHeight: 50
                     onClicked: {
                         stackView.push(mainPage)
+                        python.list_active_members_gui()
                     }
                 }
             }
@@ -446,6 +457,12 @@ ApplicationWindow {
                     id: doorSwitch
                     scale: 1.5
                     checked: false  // Initial state
+
+                    // palette {
+                    //     highlighted: doorSwitch.checked ? "green" : "lightgrey"
+                    //     base: "white"
+                    // }
+
                     onCheckedChanged: {
                         // python.on_lock_unlock_button_click(doorSwitch.checked)
                     }
@@ -574,62 +591,57 @@ ApplicationWindow {
         modal: true
         visible: false
 
-
         Rectangle {
             color: "white" // Background color
             anchors.fill: parent
 
             ColumnLayout {
                 anchors.fill: parent
-                spacing: 15  // Space between elements
+                spacing: 15
                 anchors.margins: 20
 
-                Text {
-                    text: "Account"
-                    font.pointSize: 24
-                    font.bold: true
-                    color: "black"
-                    horizontalAlignment: Text.AlignHCenter
-                    Layout.alignment: Qt.AlignLeft
+                // Spacer to push content to the bottom
+                Item {
+                    Layout.fillHeight: true
                 }
 
-
-                Text {
-                    text: "Username: " + python.username()
-                    font.pointSize: 18
-                    color: "black"
-                    Layout.alignment: Qt.AlignHCenter
-                }
-
-
-                Text {
-                    text: "Change the password"
-                    font.pointSize: 18
-                    color: "black"  // Change color to indicate it's clickable
+                // Change Password Text
+                RowLayout {
                     Layout.alignment: Qt.AlignLeft
-                    MouseArea {
-                        anchors.fill: parent  // Make the MouseArea fill the entire text area
-                        onClicked: {
-                            changePasswordDialog.open()
+                    spacing: 10
+
+                    Text {
+                        text: "Change the password"
+                        font.pointSize: 18
+                        color: "black"
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                changePasswordDialog.open()
+                            }
                         }
                     }
                 }
 
-                Text {
-                    id: logoutButton
-                    text: "Logout"
-                    font.pointSize: 18
-                    color: "black"  // Change text color to indicate it's clickable
+                // Logout Text
+                RowLayout {
                     Layout.alignment: Qt.AlignLeft
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: {
-                            stackView.push(loginPage)
-                            settingsDialog.close()
+                    spacing: 10
+
+                    Text {
+                        id: logoutButton
+                        text: "Logout"
+                        font.pointSize: 18
+                        color: "black"
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                stackView.push(loginPage)
+                                settingsDialog.close()
+                            }
                         }
                     }
                 }
-
             }
         }
     }
@@ -645,7 +657,7 @@ ApplicationWindow {
 
         Rectangle {
             anchors.fill: parent
-            color: "lightgray"  // Optional: Background color for the dialog
+            color: "white"
 
             ColumnLayout {
                 anchors.fill: parent
@@ -688,22 +700,40 @@ ApplicationWindow {
                     verticalAlignment: TextInput.AlignVCenter
                 }
 
+
                 Button {
                     text: "Change Password"
+                    width: 100
+                    height: 40
                     Layout.alignment: Qt.AlignHCenter
+                    background: Rectangle {
+                        radius: 10
+                        border.color: "gray"
+                        border.width: 1
+                    }
+
                     onClicked: {
                         python.change_password_button(
                             currentPasswordField.text,
                             newPasswordField.text,
                             repeatNewPasswordField.text
-                        )
-                    }
+                        )                }
                 }
 
+
                 Button {
-                    text: "Cancel"
+                    text: "   Cancel   "
+                    width: 100
+                    height: 40
                     Layout.alignment: Qt.AlignHCenter
-                    onClicked: changePasswordDialog.close()
+                    background: Rectangle {
+                        radius: 10
+                        border.color: "gray"
+                        border.width: 1
+                    }
+
+                    onClicked: {
+                        changePasswordDialog.close()            }
                 }
             }
         }
@@ -802,24 +832,33 @@ ApplicationWindow {
                                 }
                             }
 
-
-                            Text {
-                                id: editMemberButton
-                                text: "✎"
-                                font.pointSize: 14
-                                color: "black"  // Change text color to indicate it's clickable
-                                Layout.alignment: Qt.AlignLeft
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: {
-                                        editUserDialog.userName = name;
-                                        editUserDialog.status = status;
-                                        editUserDialog.date = access_remaining;
-                                        editUserDialog.open(); // Opens the dialog
-                                    }
+                            Button {
+                                text: "Edit"
+                                onClicked: {
+                                    editMemberDialog.memberName = name
+                                    editMemberDialog.memberStatus = status
+                                    editMemberDialog.accessRemaining = access_remaining
+                                    editMemberDialog.open()
                                 }
                             }
                         }
+                    }
+                }
+
+                Button {
+                    text: "     +     "
+                    font.pixelSize: 20
+                    width: 100
+                    height: 40
+                    Layout.alignment: Qt.AlignHCenter
+                    background: Rectangle {
+                        radius: 10
+                        border.color: "gray"
+                        border.width: 1
+                    }
+                    onClicked: {
+                        stackView.push(newMemberPage)
+                        python.clear_pictures_directory()
                     }
                 }
 
@@ -861,127 +900,123 @@ ApplicationWindow {
     }
 
 
-    // editUserDialog layout
     Dialog {
-        id: editUserDialog
-        modal: true
+        id: editMemberDialog
         width: 400
-        height: 400
+        height: 500
+        standardButtons: DialogButtonBox.Ok | DialogButtonBox.Cancel
+        visible: false
         anchors.centerIn: parent
-        property string userName
-        property string status
-        property string date
+
+        // Action for OK Button
+        onAccepted: {
+            python.edit_member_button(
+                yearComboBox.model.get(yearComboBox.currentIndex).text,
+                monthComboBox.currentIndex + 1,  // Months are 0-based
+                dayComboBox.model.get(dayComboBox.currentIndex).text,
+                hourSpinBox.value,
+                minuteSpinBox.value
+            )
+            editMemberDialog.close();
+        }
+
+        // Action for Cancel Button
+        onRejected: {
+            editMemberDialog.close();  // Simply close the dialog
+        }
+
+        property string memberName: ""
+        property string memberStatus: ""
+        property string accessRemaining: ""
 
         Rectangle {
-            id: overlay2
             anchors.fill: parent
             color: "white"
-            radius: 10
-        }
 
-        ColumnLayout {
-            spacing: 20
-            anchors.fill: parent
-            anchors.margins: 20
+            ColumnLayout {
+                anchors.fill: parent
+                spacing: 3
+                anchors.centerIn: parent
 
-            // Member Name
-            Text {
-                text: "Editing: " + userName
-                font.pointSize: 20
-                font.bold: true
-                Layout.alignment: Qt.AlignHCenter
-            }
-
-
-            // Current Status Display
-            RowLayout {
-                spacing: 10
-                Layout.alignment: Qt.AlignLeft
-
+                // Header
                 Text {
-                    text: "Current Status:"
-                    font.pointSize: 16
-                    color: "black"
-                }
-
-                // Current Status
-                Text {
-                    text: status
-                    font.pointSize: 16
-                    color: status === "authorized" ? "green" :
-                            status === "temporary" ? "orange" : "red"
+                    text: "Edit Member"
                     font.bold: true
+                    font.pixelSize: 18
+                    horizontalAlignment: Text.AlignHCenter
+                    Layout.alignment: Qt.AlignHCenter
                 }
 
-                // If Status is Temporary, Display the Date
-                Text {
-                    visible: status === "temporary"
-                    text: "(Valid Until: " + date + ")"
-                    font.pointSize: 14
-                    color: "gray"
+                // Name Field
+                RowLayout {
+                    spacing: 10
+                    Text {
+                        text: "Name:"
+                        font.pixelSize: 16
+                        Layout.alignment: Qt.AlignLeft
+                    }
+                    Text {
+                        text: editMemberDialog.memberName
+                        font.pixelSize: 16
+                        Layout.alignment: Qt.AlignLeft
+                    }
+                }
+
+                // Status Field
+                RowLayout {
+                    spacing: 10
+                    Text {
+                        text: "Status:"
+                        font.pixelSize: 16
+                        Layout.alignment: Qt.AlignLeft
+                    }
+                    Text {
+                        text: editMemberDialog.memberStatus
+                        font.pixelSize: 16
+                        Layout.alignment: Qt.AlignLeft
+                    }
+                }
+
+                // Access Remaining Field
+                RowLayout {
+                    spacing: 10
+                    Text {
+                        text: "Access Remaining:"
+                        font.pixelSize: 16
+                        Layout.alignment: Qt.AlignLeft
+                    }
+                    Text {
+                        text: editMemberDialog.accessRemaining
+                        font.pixelSize: 16
+                        Layout.alignment: Qt.AlignLeft
+                    }
+                }
+
+                RowLayout {
+                    Layout.alignment: Qt.AlignHCenter
+                    Text {
+                        text: "Change status"
+                        font.pointSize: 16
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                        color: "black"
+                    }
+
+                    ComboBox {
+                        id: statusComboBox
+                        width: 300
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                        model: ["Always", "Temporary"]
+
+                        onCurrentIndexChanged: {
+                            if (currentIndex === 1) { // Temporary selected
+                                dateTimeDialog.open();
+                            }
+                        }
+                    }
                 }
             }
-
-            // Change Status
-            RowLayout {
-                spacing: 10
-                Layout.alignment: Qt.AlignLeft
-
-                Text {
-                    text: "Change Status:"
-                    font.pointSize: 16
-                    color: "black"
-                }
-
-                ComboBox {
-                    id: statusComboBox
-                    model: ["authorized", "temporary", "not authorized"]
-                    // currentText: status
-                }
-            }
-
-            // Save Button
-            Button {
-                text: "Save"
-                width: 100
-                height: 40
-                Layout.alignment: Qt.AlignHCenter
-                background: Rectangle {
-                    radius: 10
-                    border.color: "gray"
-                    border.width: 1
-                }
-
-                onClicked: {
-                    python.edit_user_button(userName, statusComboBox.currentText);
-                    editUserDialog.close();
-                }
-            }
-
-            // Cancel Button
-            Button {
-                text: "Cancel"
-                width: 100
-                height: 40
-                Layout.alignment: Qt.AlignHCenter
-                background: Rectangle {
-                    radius: 10
-                    border.color: "gray"
-                    border.width: 1
-                }
-
-                onClicked: {
-                    editUserDialog.close();
-                }
-            }
-        }
-
-        // Populate fields dynamically when the dialog opens
-        onOpened: {
-            statusComboBox.currentText = status;
         }
     }
-
 
     // newMemberPage layout
     Component {
@@ -1048,29 +1083,32 @@ ApplicationWindow {
 
                 Button {
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    text: "Take Pictures"
+                    text: "Take Pictures 📷"
 
                     onClicked: {
                         stackView.push(cameraPage)
                     }
                 }
 
-                Text {
-                    text: "Select status"
-                    font.pointSize: 18
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    color: "black"
-                }
+                RowLayout {
 
-                ComboBox {
-                    id: statusComboBox
-                    width: 300
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    model: ["Always", "Temporary"]
+                    Text {
+                        text: "Select status"
+                        font.pointSize: 18
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                        color: "black"
+                    }
 
-                    onCurrentIndexChanged: {
-                        if (currentIndex === 1) { // Temporary selected
-                            dateTimeDialog.open();
+                    ComboBox {
+                        id: statusComboBox
+                        width: 300
+                        Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                        model: ["Always", "Temporary"]
+
+                        onCurrentIndexChanged: {
+                            if (currentIndex === 1) { // Temporary selected
+                                dateTimeDialog.open();
+                            }
                         }
                     }
                 }
@@ -1085,7 +1123,7 @@ ApplicationWindow {
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: 20
                 background: Rectangle {
-                    color: "gray"
+                    color: "lightgray"
                     radius: 10
                 }
                 onClicked: {
@@ -1093,6 +1131,8 @@ ApplicationWindow {
                         newMemberNameField.text,
                         statusComboBox.currentText
                     )
+                    stackView.push(membersPage)
+                    python.list_all_members_gui()
                 }
             }
         }
@@ -1101,157 +1141,130 @@ ApplicationWindow {
     // dateTimeDialog layout
     Dialog {
         id: dateTimeDialog
-        title: "Select Date and Time"
         modal: true
         standardButtons: DialogButtonBox.Ok | DialogButtonBox.Cancel
-        width: 400
-        height: 500
+        width: 500
+        height: 600
         anchors.centerIn: parent
 
-        Button {
-            Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-            text: "←"  // You can replace this with an icon if you prefer
-            font.pointSize: 20
-            anchors.left: parent.left
-            anchors.top: parent.top
-            background: Rectangle {
-                color: "white"
-            }
-            onClicked: {
-                if (dateTimeDialog.visible) {
-                    dateTimeDialog.visible = false
-                } else {
-                    stackView.pop()
-                }
-            }
+        // Action for OK Button
+        onAccepted: {
+            python.get_date_button(
+                yearComboBox.model.get(yearComboBox.currentIndex).text,
+                monthComboBox.currentIndex + 1,  // Months are 0-based
+                dayComboBox.model.get(dayComboBox.currentIndex).text,
+                hourSpinBox.value,
+                minuteSpinBox.value
+            )
+            dateTimeDialog.close();
         }
 
-        ColumnLayout {
-            spacing: 10
-            anchors.centerIn: parent
+        // Action for Cancel Button
+        onRejected: {
+            dateTimeDialog.close();  // Simply close the dialog
+        }
 
-            Text {
-                text: "Choose Date"
-                font.pointSize: 18
-                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                color: "black"
-            }
+        Rectangle {
+            anchors.fill: parent
+            color: "white"
 
             ColumnLayout {
-                spacing: 5
-                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                RowLayout {
-                    Text {
-                        text: "Day"
-                        font.pointSize: 16
-                        verticalAlignment: Text.AlignVCenter
-                    }
+                spacing: 15
+                anchors.fill: parent
+                anchors.margins: 20
 
-                    // SpinBox {
-                    //     id: daySpinBox
-                    //     1
-                    //     to: 31
-                    //     value: 1
-                    //     width: 40
-                    // }
-                }
-
-                RowLayout {
-
-                    Text {
-                        text: "Month"
-                        font.pointSize: 16
-                        verticalAlignment: Text.AlignVCenter
-                    }
-
-                    // SpinBox {
-                    //     id: monthSpinBox
-                    //     1
-                    //     to: 12
-                    //     value: 1
-                    //     width: 40
-                    // }
-                }
-
-                RowLayout {
-
-                    Text {
-                        text: "Year"
-                        font.pointSize: 16
-                        verticalAlignment: Text.AlignVCenter
-                    }
-
-                    // SpinBox {
-                    //     id: yearSpinBox
-                    //     2024
-                    //     to: 2030
-                    //     value: 2024
-                    //     width: 60
-                    // }
-                }
-
-
-            }
-
-            Text {
-                text: "Choose Time"
-                font.pointSize: 18
-                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                color: "black"
-            }
-
-            RowLayout {
-                spacing: 10
-                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-
-                // SpinBox {
-                //     id: hourSpinBox
-                //     0
-                //     to: 23
-                //     value: 12
-                //     width: 30
-                // }
-
-                Text {
-                    text: "Hour"
-                    font.pointSize: 16
-                    verticalAlignment: Text.AlignVCenter
-                }
-
-                // SpinBox {
-                //     id: minuteSpinBox
-                //     0
-                //     to: 59
-                //     value: 0
-                //     width: 30
-                // }
-
-                Text {
-                    text: "Minutes"
-                    font.pointSize: 16
-                    verticalAlignment: Text.AlignVCenter
-                }
-
+                // Back Button
                 Button {
-                    text: "Save"
-                    font.pointSize: 18
-                    width: 150
-                    height: 50
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 20
+                    text: "←"
+                    font.pointSize: 20
                     background: Rectangle {
-                        color: "gray"
-                        radius: 10
+                        color: "transparent"
                     }
                     onClicked: {
-                        python.get_date_button(
-                            yearSpinBox.value,
-                            monthSpinBox.value,
-                            daySpinBox.value,
-                            hourSpinBox.value,
-                            minuteSpinBox.value
-                        )
+                        dateTimeDialog.visible = false
+                    }
+                }
+
+                // Date Selection
+                Text {
+                    text: "Select Date"
+                    font.pointSize: 18
+                    color: "black"
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                RowLayout {
+                    spacing: 10
+                    Layout.alignment: Qt.AlignHCenter
+
+                    ComboBox {
+                        id: dayComboBox
+                        model: ListModel {
+                            Component.onCompleted: {
+                                for (let i = 1; i <= 31; i++) {
+                                    append({"text": i})
+                                }
+                            }
+                        }
+                        currentIndex: 0
+                        displayText: model.get(currentIndex).text
+                        width: 30
+                    }
+
+                    ComboBox {
+                        id: monthComboBox
+                        model: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+                        currentIndex: 0
+                        displayText: model[currentIndex]
+                        width: 120
+                    }
+
+                    ComboBox {
+                        id: yearComboBox
+                        model: ListModel {
+                            Component.onCompleted: {
+                                for (let i = 2025; i <= 2030; i++) {
+                                    append({"text": i})
+                                }
+                            }
+                        }
+                        currentIndex: 0
+                        displayText: model.get(currentIndex).text
+                        width: 60
+                    }
+                }
+
+                // Time Selection
+                Text {
+                    text: "Select Time"
+                    font.pointSize: 18
+                    color: "black"
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                RowLayout {
+                    spacing: 10
+                    Layout.alignment: Qt.AlignHCenter
+
+                    SpinBox {
+                        id: hourSpinBox
+                        from: 0
+                        to: 23
+                        value: 12
+                        width: 60
+                    }
+
+                    Text {
+                        text: ":"
+                        font.pointSize: 18
+                    }
+
+                    SpinBox {
+                        id: minuteSpinBox
+                        from: 0
+                        to: 59
+                        value: 0
+                        width: 60
                     }
                 }
             }
@@ -1266,56 +1279,63 @@ ApplicationWindow {
             anchors.fill: parent
             color: "white"
 
-            Button {
-                Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                text: "←"  // You can replace this with an icon if you prefer
-                font.pointSize: 20
-                anchors.left: parent.left
-                anchors.top: parent.top
-                background: Rectangle {
-                    color: "white"
-                }
-                onClicked: {
-                    stackView.pop()
-                }
-            }
-
             ColumnLayout {
-                anchors.centerIn: parent
+                anchors.fill: parent
+                anchors.margins: 20
                 spacing: 20
 
+                // Title Text
                 Text {
                     text: "Take 6 Pictures"
-                    font.pointSize: 18
+                    font.pixelSize: 24
                     font.bold: true
-                    color: "black"
                     horizontalAlignment: Text.AlignHCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
                 }
 
+                // Take Picture Button
                 Button {
                     text: "Take Picture"
+                    anchors.centerIn: parent
                     onClicked: {
-                        python.take_picture()  // Call the Python function to capture a picture
+                        python.take_picture()  // Call the Python function to capture and save a picture
                     }
                 }
 
-                Button {
-                    text: "Finish"
-                    enabled: python.pictureCount === 6  // Enable only after 6 pictures
-                    onClicked: {
-                        stackView.pop()  // Return to the previous page
-                    }
-                }
-
+                // Picture Count Text
                 Text {
-                    text: "Pictures Taken: " + python.pictureCount + "/6"
-                    font.pointSize: 16
-                    color: "black"
+                    id: pictureCountDisplay
+                    text: "Has been taken " + python.pictureCount + "/6 pictures"
+                    font.pixelSize: 18
                     horizontalAlignment: Text.AlignHCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+
+                // Finish and Cancel Buttons Row
+                RowLayout {
+                    spacing: 20
+                    anchors.horizontalCenter: parent.horizontalCenter
+
+                    Button {
+                        id: finishButton
+                        text: "Finish"
+                        enabled: backend.pictureCount === 6  // Enable only when 6 pictures are present
+                        onClicked: {
+                            console.log("Finish button clicked!");
+                            stackView.push(newMemberPage)
+                        }
+                    }
+
+                    Button {
+                        id: cancelButton
+                        text: "Cancel"
+                        onClicked: {
+                            python.clear_pictures_directory()
+                            stackView.push(newMemberPage)
+                        }
+                    }
                 }
             }
         }
     }
-
 }
-

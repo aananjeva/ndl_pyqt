@@ -8,6 +8,7 @@ from user_commands.list_active_members_response import on_list_active_members_re
 from user_commands.list_all_members_response import on_list_all_members_response
 from user_commands.new_member_response import on_new_member_response
 from user_commands.register_response import on_register_response
+from user_commands.general_commands_response import on_general_commands_response
 from util.endpoints import Endpoints
 from user_commands.login_response import on_login_response
 
@@ -33,9 +34,10 @@ class MQTTServer:
         self._client.subscribe("forgot_password_response")
         self._client.subscribe("last_active_person")
         self._client.subscribe("all_members_response")
-        self._client.subscribe("new_member_response")
-        self._client.subscribe("delete_member_response")
+        self._client.subscribe("add_member_response")
+        self._client.subscribe("delete_response")
         self._client.subscribe("lock")
+        self._client.subscribe("change_password/response")
 
 
     @classmethod
@@ -45,13 +47,13 @@ class MQTTServer:
                 case "register_response":
                     payload = msg.payload.decode()
                     on_register_response(payload)
-                case "new_member_response":
+                case "add_member_response":
                     payload = msg.payload.decode()
-                    on_new_member_response(payload)
+                    on_general_commands_response(payload)
                 case "edit_member_response":
                     payload = msg.payload.decode()
                     on_edit_member_response(payload)
-                case "delete_member_response":
+                case "delete_response":
                     payload = msg.payload.decode()
                     on_delete_member_response(payload)
                 case "all_members_response":
@@ -66,6 +68,10 @@ class MQTTServer:
                 case "login_response":
                     payload = msg.payload.decode()
                     on_login_response(payload)
+                case "change_password/response":
+                    payload = msg.payload.decode()
+                    on_general_commands_response(payload)
+
                 case _:
                     pass
         except Exception as e:

@@ -3,6 +3,7 @@ import csv
 import os
 import re
 from datetime import datetime
+from multiprocessing.util import debug
 from venv import logger
 
 from data_operations.data import FileTransfer
@@ -87,7 +88,6 @@ class UserCommands:
         except Exception as e:
             raise e
 
-
     def register(self, username, password, repeat_password):
         try:
             if not username or not password or not repeat_password:
@@ -126,7 +126,7 @@ class UserCommands:
         except Exception as e:
             raise e
 
-    def create_new_member(self, member_name, path_pictures, status, date):
+    def create_new_member(self, member_name, path_pictures, status):
         try:
             if len(path_pictures) != 6:
                 raise Exception("Exactly 6 pictures are required.")
@@ -159,7 +159,9 @@ class UserCommands:
             hashed_new_password = self.hash_password(new_password)
 
             new_password_data = {
-                "password": hashed_new_password
+                "username": self._current_user,
+                "old_password": self._stored_password,
+                "new_password": hashed_new_password
             }
 
             new_password_data_json = json.dumps(new_password_data)
@@ -167,6 +169,7 @@ class UserCommands:
             new_password_request = {"value": new_password_data_json, "session_token": self._token}
 
             new_password_json = json.dumps(new_password_request)
+            # print(new_password_json)
 
             self._mqtt_client.send_message(new_password_json, self._topic_ask_change_password)
 
@@ -216,30 +219,23 @@ class UserCommands:
         except Exception as e:
             raise e
 
-    def change_member(self, member_name, new_member_name, member_status, date):
+    def change_member(self, member_name, member_status, date):
         try:
-          if new_member_name.strip():
+            if member_status.lower() == "temporary":
+                date = self.read_file_to_variable("/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/date/selected_datetime.txt")
+            else:
+                date = ""
 
             change_data = {
                 "name": member_name,
-                "new_member_name": new_member_name,
-                "authorization": member_status,
-                "access_remaining_date_time": date
+                "new_status": member_status,
+                "date": ""
             }
             change_data_json = json.dumps(change_data)
             change_request = {"value": change_data_json, "session_token": self._token}
             change_json = json.dumps(change_request)
             self._mqtt_client.send_message(change_json, self._topic_edit_member)
 
-          else:
-              change_data = {
-                  "name": "", #is it right? ASKJ
-                  "member_status": member_status
-
-              }
-              change_json = json.dumps(change_data)
-              self.member_name = member_name
-              self.member_has_access = member_status
 
               self._mqtt_client.send_message(change_json, self._topic_edit_member)
 
