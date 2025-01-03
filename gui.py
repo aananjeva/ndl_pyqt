@@ -74,6 +74,7 @@ class GuiBackend(QObject):
     notificationSignal = Signal(str)
     usernameSignal = Signal(str)
     members = []
+    picture_path_server = ""
 
 
     def trigger_notification(self, message):
@@ -338,8 +339,9 @@ class GuiBackend(QObject):
     #Function for handling members
     @Slot(str, str)
     def new_member_button(self, name, status):
+        # picture_path_server = "/home/ubuntu/images/member@_two" # make it dynamic
+        pictures_dir = "/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/images"
         try:
-            pictures_dir = "/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/images"
             pictures = [
                 os.path.join(pictures_dir, f)
                 for f in os.listdir(pictures_dir)
@@ -351,8 +353,9 @@ class GuiBackend(QObject):
 
             name_trimmed = name.strip().split(" ")
             values = [x for x in name_trimmed if x]
-            name = values[0] if len(values) == 1 else ""
-            surname = values[1] if len(values) == 2 else ""
+            name = values[0] if len(values) >= 1 else ""
+            surname = values[1] if len(values) >= 2 else ""
+            self.picture_path_server = f"/home/ubuntu/images/{name}_{surname}"
 
             try:
                 file_transfer = FileTransfer(name, surname, pictures_dir)
@@ -360,8 +363,6 @@ class GuiBackend(QObject):
             except Exception as e:
                 raise Exception(e)
 
-            # self._user_commands.create_new_member(name, pictures, status, None)
-            # logger.debug(f"New member {name} created with status {status}.")
 
         except Exception as e:
             logger.debug(f"Error creating new member: {e}")
@@ -372,8 +373,10 @@ class GuiBackend(QObject):
                     file.write("")
             except Exception as e:
                 logger.debug(f"Error editing the file: {str(e)}")
-            self._user_commands.create_new_member(name, pictures, status, None)
+            self._user_commands.create_new_member(name, pictures_dir, self.picture_path_server, status)
+            time.sleep(1)
             self.clear_pictures_directory()
+
             with open(f"mqtt_responses_cached/general_commands_authorized.csv", "r") as file:
                 response = file.read().strip()
             try:
@@ -395,18 +398,55 @@ class GuiBackend(QObject):
     @Slot(str, str)
     def edit_member_button(self, name, new_status):
         try:
-            for member in self.members:
-                if member["name"] == name:
-                    member["authorization"] = new_status
-                    if new_status == "temporary":
-                        member["access_remaining"] = "2025-01-01"  # Example date
-                    break
-            self.membersUpdated.emit(self.members)
+            try:
+                with open("mqtt_responses_cached/general_commands_authorized.csv", "w") as file:
+                    file.write("")
+            except Exception as e:
+                logger.debug(f"Error editing the file: {str(e)}")
+            self._user_commands.change_member(name, new_status)
+            with open(f"mqtt_responses_cached/general_commands_authorized.csv", "r") as file:
+                response = file.read().strip()
+            try:
+                edit_member_code = ResponseCodes.string_to_enum(response)
+            except Exception:
+                edit_member_code = ResponseCodes.FAILED
+
+            match edit_member_code:
+                case ResponseCodes.OK:
+                    logger.debug("Member was edited")
+                case ResponseCodes.FAILED:
+                    logger.debug("Failed to edit member")
+                case _:
+                    logger.debug("Please try again")
+
+
         except Exception as e:
             logger.error(f"Error updating user: {str(e)}")
 
-    def delete_member_button(self):
-        pass
+    @Slot(str)
+    def delete_member_button(self, id):
+        try:
+            with open("mqtt_responses_cached/general_commands_authorized.csv", "w") as file:
+                file.write("")
+            self._user_commands.delete_member(id)
+            with open(f"mqtt_responses_cached/general_commands_authorized.csv", "r") as file:
+                response = file.read().strip()
+            try:
+                delete_member_code = ResponseCodes.string_to_enum(response)
+            except Exception:
+                delete_member_code = ResponseCodes.FAILED
+
+            match delete_member_code:
+                case ResponseCodes.OK:
+                    logger.debug("Member was deleted")
+                case ResponseCodes.FAILED:
+                    logger.debug("Failed to delete member")
+                case _:
+                    logger.debug("Please try again")
+
+        except Exception as e:
+            logger.debug(f"Error editing the file: {str(e)}")
+
 
     #Helper functions
     @Slot()

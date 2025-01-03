@@ -13,7 +13,6 @@ ApplicationWindow {
     height: 750
     visible: true
     title: "SmartLock"
-    // property string username: ""
 
 
     StackView {
@@ -52,7 +51,8 @@ ApplicationWindow {
                 membersModel.append({
                     name: members[i].name,
                     status: members[i].authorization,
-                    access_remaining: members[i].access_remaining
+                    access_remaining: members[i].access_remaining,
+                    id: members[i].id
                 });
             }
         }
@@ -652,8 +652,21 @@ ApplicationWindow {
         width: 400
         height: 600
         modal: true
+        standardButtons: DialogButtonBox.Ok | DialogButtonBox.Cancel
         visible: false
         anchors.centerIn: parent
+
+        onAccepted: {
+            python.change_password_button(
+                currentPasswordField.text,
+                newPasswordField.text,
+                repeatNewPasswordField.text
+            )
+        }
+
+        onRejected: {
+            changePasswordDialog.close()
+        }
 
         Rectangle {
             anchors.fill: parent
@@ -698,42 +711,6 @@ ApplicationWindow {
                     font.pointSize: 18
                     echoMode: TextInput.Password
                     verticalAlignment: TextInput.AlignVCenter
-                }
-
-
-                Button {
-                    text: "Change Password"
-                    width: 100
-                    height: 40
-                    Layout.alignment: Qt.AlignHCenter
-                    background: Rectangle {
-                        radius: 10
-                        border.color: "gray"
-                        border.width: 1
-                    }
-
-                    onClicked: {
-                        python.change_password_button(
-                            currentPasswordField.text,
-                            newPasswordField.text,
-                            repeatNewPasswordField.text
-                        )                }
-                }
-
-
-                Button {
-                    text: "   Cancel   "
-                    width: 100
-                    height: 40
-                    Layout.alignment: Qt.AlignHCenter
-                    background: Rectangle {
-                        radius: 10
-                        border.color: "gray"
-                        border.width: 1
-                    }
-
-                    onClicked: {
-                        changePasswordDialog.close()            }
                 }
             }
         }
@@ -838,6 +815,7 @@ ApplicationWindow {
                                     editMemberDialog.memberName = name
                                     editMemberDialog.memberStatus = status
                                     editMemberDialog.accessRemaining = access_remaining
+                                    editMemberDialog.id = id;
                                     editMemberDialog.open()
                                 }
                             }
@@ -899,7 +877,7 @@ ApplicationWindow {
         }
     }
 
-
+    // editMemberDialog layout
     Dialog {
         id: editMemberDialog
         width: 400
@@ -911,11 +889,8 @@ ApplicationWindow {
         // Action for OK Button
         onAccepted: {
             python.edit_member_button(
-                yearComboBox.model.get(yearComboBox.currentIndex).text,
-                monthComboBox.currentIndex + 1,  // Months are 0-based
-                dayComboBox.model.get(dayComboBox.currentIndex).text,
-                hourSpinBox.value,
-                minuteSpinBox.value
+                editMemberDialog.memberName,
+                statusComboBox.currentText
             )
             editMemberDialog.close();
         }
@@ -928,6 +903,7 @@ ApplicationWindow {
         property string memberName: ""
         property string memberStatus: ""
         property string accessRemaining: ""
+        property string id: ""
 
         Rectangle {
             anchors.fill: parent
@@ -1005,7 +981,7 @@ ApplicationWindow {
                         id: statusComboBox
                         width: 300
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                        model: ["Always", "Temporary"]
+                        model: ["always", "temporary", "not authorized"]
 
                         onCurrentIndexChanged: {
                             if (currentIndex === 1) { // Temporary selected
@@ -1014,6 +990,24 @@ ApplicationWindow {
                         }
                     }
                 }
+
+                Button {
+                    id: deleteMemberButton
+                    text: "Delete"  // You can adjust the text if needed
+                    font.pixelSize: 16
+                    width: 100
+                    height: 40
+                    background: Rectangle {
+                        color: "lightgray"  // Set the button background to light gray
+                        radius: 8  // Rounded corners
+                        border.color: "gray"  // Optional: Add a border for a cleaner look
+                        border.width: 1
+                    }
+                    onClicked: {
+                        python.delete_member_button(editMemberDialog.id)
+                    }
+                }
+
             }
         }
     }
@@ -1103,7 +1097,7 @@ ApplicationWindow {
                         id: statusComboBox
                         width: 300
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                        model: ["Always", "Temporary"]
+                        model: ["authorized", "temporary"]
 
                         onCurrentIndexChanged: {
                             if (currentIndex === 1) { // Temporary selected
