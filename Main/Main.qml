@@ -38,11 +38,19 @@ ApplicationWindow {
         onOnLoginSuccess: {
             stackView.push(mainPage)
             python.list_active_members_gui()
+            python.lock_listener()
         }
 
         onOnRegisterSuccess: {
             stackView.push(mainPage)
             python.list_active_members_gui()
+            python.lock_listener()
+        }
+
+        onDefaultLoginSuccess: {
+            stackView.push(mainPage)
+            python.list_active_members_gui()
+            python.lock_listener()
         }
 
         onMembersUpdated: function (members) {
@@ -77,6 +85,10 @@ ApplicationWindow {
         // onUsernameSignal: {
         //     username = python.username() // Update the property with the emitted username
         // }
+        onMagneticLockSignal: {
+            doorSwitch.checked = magneticLockSignal;
+        }
+
     }
 
     // introPage layout
@@ -207,15 +219,6 @@ ApplicationWindow {
                         }
                     }
                 }
-
-                MessageDialog {
-                    id: messageDialog
-                    title: "Attention"
-                    text: "Please press the button on the lock manually."
-                    visible: false
-                    onAccepted: console.log("Message dialog accepted")
-                }
-
             }
         }
     }
@@ -297,8 +300,10 @@ ApplicationWindow {
                     Layout.preferredWidth: 300
                     Layout.preferredHeight: 50
                     onClicked: {
-                        stackView.push(mainPage)
-                        python.list_active_members_gui()
+                        python.default_login_button(
+                            defaultUsernameField.text,
+                            defaultPasswordField.text
+                        )
                     }
                 }
             }
@@ -889,7 +894,7 @@ ApplicationWindow {
         // Action for OK Button
         onAccepted: {
             python.edit_member_button(
-                editMemberDialog.memberName,
+                editMemberDialog.id,
                 statusComboBox.currentText
             )
             editMemberDialog.close();
@@ -906,12 +911,13 @@ ApplicationWindow {
         property string id: ""
 
         Rectangle {
-            anchors.fill: parent
             color: "white"
+            anchors.fill: parent
+            anchors.centerIn: parent  // Center the rectangle within the dialog
+            radius: 10  // Optional: Add rounded corners for a nice effect
 
             ColumnLayout {
                 anchors.fill: parent
-                spacing: 3
                 anchors.centerIn: parent
 
                 // Header
@@ -926,6 +932,7 @@ ApplicationWindow {
                 // Name Field
                 RowLayout {
                     spacing: 10
+                    Layout.margins: 30
                     Text {
                         text: "Name:"
                         font.pixelSize: 16
@@ -941,6 +948,7 @@ ApplicationWindow {
                 // Status Field
                 RowLayout {
                     spacing: 10
+                    Layout.margins: 30
                     Text {
                         text: "Status:"
                         font.pixelSize: 16
@@ -956,6 +964,7 @@ ApplicationWindow {
                 // Access Remaining Field
                 RowLayout {
                     spacing: 10
+                    Layout.margins: 30
                     Text {
                         text: "Access Remaining:"
                         font.pixelSize: 16
@@ -991,23 +1000,32 @@ ApplicationWindow {
                     }
                 }
 
-                Button {
-                    id: deleteMemberButton
-                    text: "Delete"  // You can adjust the text if needed
-                    font.pixelSize: 16
-                    width: 100
-                    height: 40
-                    background: Rectangle {
-                        color: "lightgray"  // Set the button background to light gray
-                        radius: 8  // Rounded corners
-                        border.color: "gray"  // Optional: Add a border for a cleaner look
-                        border.width: 1
-                    }
-                    onClicked: {
-                        python.delete_member_button(editMemberDialog.id)
+
+                RowLayout {
+                    Layout.alignment: Qt.AlignHCenter
+                    spacing: 10
+
+                    Button {
+                        id: deleteMemberButton
+                        text: "Delete"
+                        font.pixelSize: 16
+                        width: 120
+                        height: 40
+                        background: Rectangle {
+                            color: "red"
+                            radius: 8
+                        }
+                        contentItem: Text {
+                            text: deleteMemberButton.text
+                            color: "white"
+                            font.pixelSize: 16
+                            anchors.centerIn: parent
+                        }
+                        onClicked: {
+                            python.delete_member_button(editMemberDialog.id)
+                        }
                     }
                 }
-
             }
         }
     }

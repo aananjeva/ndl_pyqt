@@ -1,8 +1,8 @@
 from enum import Enum
 
-class EditMemberResponseCodes(Enum):
-    OK = 1,
-    FAILED = 0
+class MagneticLockResponseCodes(Enum):
+    OPEN = 1,
+    CLOSE = 0
 
     def __str__(self):
         return self.name
@@ -12,11 +12,11 @@ class EditMemberResponseCodes(Enum):
         string_lowercase = string.lower()
         try:
             match string_lowercase:
-                case "ok":
-                    return EditMemberResponseCodes.OK
-                case "failed":
-                    return EditMemberResponseCodes.FAILED
+                case "open":
+                    return MagneticLockResponseCodes.OPEN
+                case "close":
+                    return MagneticLockResponseCodes.CLOSE
                 case _:
                     raise ValueError
         except ValueError:
-            raise Exception("Edits were not saved")
+            raise Exception("The lock is closed")

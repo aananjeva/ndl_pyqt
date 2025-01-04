@@ -1,9 +1,7 @@
-import csv
 import json
 import os
 import re
 import time
-from lib2to3.fixes.fix_input import context
 from shutil import move
 
 import cv2
@@ -14,13 +12,14 @@ from data_operations.data import FileTransfer
 from mqtt import MQTTServer
 from program_codes.login_response_codes import LoginResponseCodes
 from PySide6.QtMultimedia import QCamera
+
+from program_codes.magnetic_lock_response_codes import MagneticLockResponseCodes
 from program_codes.register_response_codes import RegisterResponseCodes
 from program_codes.general_commands_response_codes import ResponseCodes
 from UserCommands import UserCommands
 from PySide6.QtCore import Signal
 from datetime import datetime
 from loguru import logger
-
 
 class MembersModel(QAbstractListModel):
     NameRole = Qt.UserRole + 1
@@ -38,11 +37,6 @@ class MembersModel(QAbstractListModel):
         self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount())
         self._members.append(member)
         self.endInsertRows()
-
-    # def update_members(self, members):
-    #     self.beginResetModel()
-    #     self._members = members
-    #     self.endResetModel()
 
     def data(self, index, role):
         if not index.isValid() or index.row() >= len(self._members):
@@ -64,19 +58,26 @@ class MembersModel(QAbstractListModel):
             self.AccessRemainingRole: b"access_remaining",
         }
 
+'''
+This class takes user inputs from the Main.qnl and uses functions from UserCommands class
+where the message is being send to the server via mqtt
+'''
+
 class GuiBackend(QObject):
-    #signals:
-    pictureCountChanged = Signal()
-    onLoginSuccess = Signal()
-    onRegisterSuccess = Signal()
-    membersUpdated = Signal(list)
-    activeMembersUpdated = Signal(list)
-    notificationSignal = Signal(str)
-    usernameSignal = Signal(str)
-    members = []
-    picture_path_server = ""
+    '''The signals that are send to the app interface'''
+    pictureCountChanged = Signal() #the count of taken pictures
+    onLoginSuccess = Signal() #if the login was successful
+    onRegisterSuccess = Signal() #if the registration was successful
+    membersUpdated = Signal(list) #to list all the members
+    activeMembersUpdated = Signal(list) #to list active members
+    notificationSignal = Signal(str) #to show the notifications
+    magneticLockSignal = Signal(bool) #to show the door status
+    defaultLoginSuccess = Signal() #if the default login was successful
 
+    members = []  #the array to keep the members
+    picture_path_server = "" #the path to the face pictures of a member
 
+    '''Function that triggers notifications'''
     def trigger_notification(self, message):
         self.notificationSignal.emit(message)
 
@@ -98,9 +99,9 @@ class GuiBackend(QObject):
         self.capture_session.setCamera(self.camera)
         self.capture_session.setImageCapture(self.image_capture)
 
+    '''Login function'''
     @Slot(str, str)
     def login_button(self, username, password):
-        # call login from UserCommands
         try:
             if not username or not password:
                 self.trigger_notification("Please enter your username and password")
@@ -111,15 +112,12 @@ class GuiBackend(QObject):
             logger.debug(f"Error initiating login: {str(e)}")
             return
 
-        # sleep(3) "Please wait"
-        # self.show_notification(self, "Please wait :)")
         time.sleep(3)
 
         # check the login response using csv file and convert it to enum using string_to_enum
         try:
             with open("mqtt_responses_cached/login_authorized.csv", "r") as file:
                 response = file.read().strip()
-
             try:
                 login_code = LoginResponseCodes.string_to_enum(response)
             except Exception:
@@ -137,24 +135,28 @@ class GuiBackend(QObject):
                     logger.debug("Please try again")
                     self.trigger_notification("Please try again!")
 
-
         except Exception as e:
             logger.debug(f"Error reading login response: {str(e)}")
 
+    '''Register function'''
     @Slot(str, str, str)
     def register_button(self, username, password, repeat_password):
         try:
             if not username or not password or not repeat_password:
                 self.trigger_notification("Please enter your username and password")
             if password != repeat_password:
+                logger.debug("Passwords do not match")
                 self.trigger_notification("Passwords do not match")
 
             if len(password) < 8:
                 self.trigger_notification("Password must be at least 8 characters")
+                logger.debug("Password must be at least 8 characters")
             if not re.search(r'[A-Z]', password):
                 self.trigger_notification("Password must contain at least one uppercase letter")
+                logger.debug("Password must contain at least one uppercase letter")
             if "ndl" not in password:
                 self.trigger_notification("Password must contain the substring ndl")
+                logger.debug("Password must contain the substring ndl")
 
             with open("mqtt_responses_cached/register_authorized.csv", "w") as file:
                 file.write("")
@@ -163,11 +165,9 @@ class GuiBackend(QObject):
             logger.debug(f"Error initiating register: {str(e)}")
             return
 
-        # sleep(3) "Please wait"
-        # self.show_notification(self, "Please wait :)")
+        self.trigger_notification("Please wait :)")
         time.sleep(3)
 
-        # check the register response using csv file and convert it to enum using string_to_enum
         try:
             with open("mqtt_responses_cached/register_authorized.csv", "r") as file:
                 response = file.read().strip()
@@ -188,28 +188,36 @@ class GuiBackend(QObject):
                     logger.debug("Please try again")
                     self.trigger_notification("Please try again!")
 
-
         except Exception as e:
             raise e
 
-    @Slot()
-    def forgot_password_button(self, msg):
+    '''Default login function'''
+    @Slot(str, str)
+    def default_login_button(self, username, password):
+        with open("/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/resources/default_login/default_username", "r") as file:
+            default_username = file.read().strip()
+        with open("/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/resources/default_login/default_password", "r") as file:
+            default_password = file.read().strip()
         try:
-            with open("mqtt_responses_cached/general_commands_authorized.csv", "w") as file:
-                file.write("")
-            self._user_commands.forgot_password()
-        except Exception as e:
-            logger.debug("Please press the button again")
+            if not username or not password:
+                self.trigger_notification("Please enter default username and password")
+                logger.debug("Default username and password were nor entered")
+                return
+            if password != default_password:
+                self.trigger_notification("Default password is not correct")
+                logger.debug("Default password is not correct")
+                return
+            if username != default_username:
+                self.trigger_notification("Default username is not correct")
+                logger.debug("Default username is not correct")
+                return
+            # self.trigger_notification("Please wait :)")
+            self.defaultLoginSuccess.emit()
 
-        try:
-            response = msg.payload.decode()
-            if response.lower() == "ok":
-                self._user_commands.forgot_password()
-            else:
-                logger.debug("Please press the button again")
         except Exception as e:
-            raise e
+            logger.debug(f"Error initiating login: {str(e)}")
 
+    '''List all members function'''
     @Slot()
     def list_all_members_gui(self):
         members = []
@@ -233,6 +241,7 @@ class GuiBackend(QObject):
 
         self.membersUpdated.emit(members)
 
+    '''List active members function'''
     @Slot()
     def list_active_members_gui(self):
         members = []
@@ -277,21 +286,21 @@ class GuiBackend(QObject):
         # Emit the list of active members
         self.activeMembersUpdated.emit(members)
 
+    '''Change password function'''
     @Slot(str, str, str)
     def change_password_button(self, current_password, new_password, repeat_password):
         try:
             real_password = self._user_commands.get_current_password()
             hash_current_password = self._user_commands.hash_password(current_password)
             if real_password != hash_current_password:
-                logger.debug("The entered password is wrong")
                 self.trigger_notification("The entered password is wrong!")
 
             if new_password != repeat_password:
-                logger.debug("Passwords do not match")
                 self.trigger_notification("Passwords do not match!")
 
         except Exception as e:
             logger.debug(f"Error changing password: {e}")
+            self.trigger_notification("Please try again!")
 
         try:
             try:
@@ -319,10 +328,10 @@ class GuiBackend(QObject):
                     logger.debug("Please try again")
                     self.trigger_notification("Please try again!")
 
-
         except Exception as e:
-            raise e
+            logger.debug(f"Error changing password: {e}")
 
+    '''Function to get the date'''
     @Slot(int, int, int, int, int)
     def get_date_button(self, year, month, day, hour, minute):
         try:
@@ -336,7 +345,8 @@ class GuiBackend(QObject):
         except ValueError as e:
             logger.debug(f"Error creating datetime: {e}")
 
-    #Function for handling members
+    '''Functions for handling operations on members'''
+    '''Function to create a new member'''
     @Slot(str, str)
     def new_member_button(self, name, status):
         # picture_path_server = "/home/ubuntu/images/member@_two" # make it dynamic
@@ -363,7 +373,6 @@ class GuiBackend(QObject):
             except Exception as e:
                 raise Exception(e)
 
-
         except Exception as e:
             logger.debug(f"Error creating new member: {e}")
 
@@ -374,6 +383,7 @@ class GuiBackend(QObject):
             except Exception as e:
                 logger.debug(f"Error editing the file: {str(e)}")
             self._user_commands.create_new_member(name, pictures_dir, self.picture_path_server, status)
+            self.trigger_notification("Please wait :)")
             time.sleep(1)
             self.clear_pictures_directory()
 
@@ -386,24 +396,31 @@ class GuiBackend(QObject):
 
             match new_member_code:
                 case ResponseCodes.OK:
+                    self.trigger_notification("New member has been created!")
+                    self.trigger_notification("Please reload the page")
                     logger.debug("New member was created")
                 case ResponseCodes.FAILED:
+                    self.trigger_notification("Failed to create new member")
                     logger.debug("Failed to create new member")
                 case _:
+                    self.trigger_notification("Please try again!")
                     logger.debug("Please try again")
 
         except Exception as e:
-            raise e
+            logger.debug(f"Error creating new member: {e}")
 
+    '''Function to edit a member'''
     @Slot(str, str)
-    def edit_member_button(self, name, new_status):
+    def edit_member_button(self, id, new_status):
         try:
             try:
                 with open("mqtt_responses_cached/general_commands_authorized.csv", "w") as file:
                     file.write("")
             except Exception as e:
                 logger.debug(f"Error editing the file: {str(e)}")
-            self._user_commands.change_member(name, new_status)
+            self._user_commands.change_member(id, new_status)
+            time.sleep(1)
+            self.trigger_notification("Please wait :)")
             with open(f"mqtt_responses_cached/general_commands_authorized.csv", "r") as file:
                 response = file.read().strip()
             try:
@@ -413,22 +430,26 @@ class GuiBackend(QObject):
 
             match edit_member_code:
                 case ResponseCodes.OK:
+                    self.trigger_notification("Member has been edited!")
+                    self.trigger_notification("Please reload the page")
                     logger.debug("Member was edited")
                 case ResponseCodes.FAILED:
+                    self.trigger_notification("Failed to edit member")
                     logger.debug("Failed to edit member")
                 case _:
+                    self.trigger_notification("Please try again!")
                     logger.debug("Please try again")
-
 
         except Exception as e:
             logger.error(f"Error updating user: {str(e)}")
 
+    '''Function to delete a member'''
     @Slot(str)
-    def delete_member_button(self, id):
+    def delete_member_button(self, member_id):
         try:
             with open("mqtt_responses_cached/general_commands_authorized.csv", "w") as file:
                 file.write("")
-            self._user_commands.delete_member(id)
+            self._user_commands.delete_member(member_id)
             with open(f"mqtt_responses_cached/general_commands_authorized.csv", "r") as file:
                 response = file.read().strip()
             try:
@@ -438,17 +459,20 @@ class GuiBackend(QObject):
 
             match delete_member_code:
                 case ResponseCodes.OK:
+                    self.trigger_notification("Member has been deleted")
+                    self.trigger_notification("Please reload the page")
                     logger.debug("Member was deleted")
                 case ResponseCodes.FAILED:
+                    self.trigger_notification("Failed to delete member")
                     logger.debug("Failed to delete member")
                 case _:
+                    self.trigger_notification("Please try again!")
                     logger.debug("Please try again")
 
         except Exception as e:
             logger.debug(f"Error editing the file: {str(e)}")
 
-
-    #Helper functions
+    '''Helper functions'''
     @Slot()
     def take_picture(self):
         try:
@@ -494,13 +518,6 @@ class GuiBackend(QObject):
         finally:
             cap.release()
             cv2.destroyAllWindows()
-
-    # @Slot()
-    # def check_completion(self):
-    #     if self.picture_count < 6:
-    #         logger.debug(f"Only {self.picture_count}/6 pictures taken.")
-    #     else:
-    #         logger.debug("All 6 pictures have been taken.")
 
     @Property(int, notify=pictureCountChanged)
     def pictureCount(self):
@@ -549,3 +566,25 @@ class GuiBackend(QObject):
         else:
             QMessageBox.information(None, "Complete", "You have taken all 6 pictures!")
 
+    @Slot()
+    def lock_listener(self):
+        try:
+            with open(f"mqtt_responses_cached/magnetic_lock_authorized.csv", "r") as file:
+                response = file.read().strip()
+            try:
+                magnetic_lock_code = MagneticLockResponseCodes.string_to_enum(response)
+            except Exception:
+                magnetic_lock_code = MagneticLockResponseCodes.CLOSE
+
+            match magnetic_lock_code:
+                case MagneticLockResponseCodes.OPEN:
+                    logger.debug("Open")
+                    self.magneticLockSignal.emit(True)
+                case MagneticLockResponseCodes.CLOSE:
+                    logger.debug("Close")
+                    self.magneticLockSignal.emit(False)
+                case _:
+                    logger.debug("Please try again")
+                    self.magneticLockSignal.emit(False)
+        except Exception as e:
+            logger.debug(f"Error lock listener: {str(e)}")

@@ -2,11 +2,9 @@ import paho.mqtt.client as mqtt
 import time
 import threading
 
-from user_commands.delete_member_response import on_delete_member_response
-from user_commands.edit_member_response import on_edit_member_response
+from user_commands.magnetic_lock_response import on_magnetic_lock_response
 from user_commands.list_active_members_response import on_list_active_members_response
 from user_commands.list_all_members_response import on_list_all_members_response
-from user_commands.new_member_response import on_new_member_response
 from user_commands.register_response import on_register_response
 from user_commands.general_commands_response import on_general_commands_response
 from util.endpoints import Endpoints
@@ -28,7 +26,7 @@ class MQTTServer:
         self._connect()
         # subscribe to the topic I need to listen to
         self._client.subscribe("mqtt_responses_cached")
-        # self._client.subscribe("magnetic_lock")
+        self._client.subscribe("magnetic_lock")
         self._client.subscribe("login_response")
         self._client.subscribe("register_response")
         self._client.subscribe("edit_member_status/response")
@@ -51,12 +49,9 @@ class MQTTServer:
                 case "add_member_response":
                     payload = msg.payload.decode()
                     on_general_commands_response(payload)
-                case "edit_member_response":
-                    payload = msg.payload.decode()
-                    on_edit_member_response(payload)
                 case "delete_response":
                     payload = msg.payload.decode()
-                    on_delete_member_response(payload)
+                    on_general_commands_response(payload)
                 case "all_members_response":
                     payload = msg.payload.decode()
                     on_list_all_members_response(payload)
@@ -65,7 +60,7 @@ class MQTTServer:
                     on_list_active_members_response(payload)
                 case "magnetic_lock":
                     payload = msg.payload.decode()
-                    print(payload)
+                    on_magnetic_lock_response(payload)
                 case "login_response":
                     payload = msg.payload.decode()
                     on_login_response(payload)

@@ -6,6 +6,8 @@ from datetime import datetime
 from multiprocessing.util import debug
 from venv import logger
 
+from paramiko.util import parse_ssh_config
+
 from data_operations.data import FileTransfer
 import paramiko
 from urllib3 import request
@@ -176,12 +178,7 @@ class UserCommands:
             raise e
 
     def lock_unlock(self, current_state):
-        try:
-            self.intended_state = current_state
-            command = "close" if current_state else "open"
-            self._mqtt_client.send_message(json.dumps({"command": "lock_ask"}), self._topic_ask_lock_unlock)
-        except Exception as e:
-            raise e
+        pass
 
     def active_members(self):
         try:
@@ -190,6 +187,7 @@ class UserCommands:
             self._mqtt_client.send_message(active_members_data_json, self._topic_ask_active_members)
         except Exception as e:
             raise e
+
 
     def all_members(self):
         try:
@@ -200,38 +198,39 @@ class UserCommands:
         except Exception as e:
             raise e
 
-    #TODO to check
-    def delete_member(self, member_name):
+    #TODO
+    def delete_member(self, member_id):
         try:
-            delete_data = {
-                "name": member_name
-            }
-            delete_data_json = json.dumps(delete_data)
+            # delete_data = {
+            #     "id": member_id
+            # }
+            # delete_data_json = json.dumps(delete_data)
 
-            delete_request = {"value": delete_data_json, "session_token": self._token}
+            delete_request = {"value": member_id, "session_token": self._token}
 
             delete_json = json.dumps(delete_request)
-
+            print(delete_json)
             self._mqtt_client.send_message(delete_json, self._topic_delete_member)
 
         except Exception as e:
             raise e
 
-    def change_member(self, member_name, member_status):
+    #TODO
+    def change_member(self, member_id, member_status):
         try:
-            if member_status.lower() == "temporary":
-                date = self.read_file_to_variable("/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/date/selected_datetime.txt")
-            else:
-                date = ""
+            # if member_status.lower() == "temporary":
+            #     date = self.read_file_to_variable("/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/date/selected_datetime.txt")
+            # else:
+            #     date = ""
 
             change_data = {
-                "name": member_name,
+                "id": member_id,
                 "new_status": member_status,
-                "date": date
+                # "date": date
             }
             change_request = {"value": change_data, "session_token": self._token}
             change_json = json.dumps(change_request)
-
+            print(change_json)
             self._mqtt_client.send_message(change_json, self._topic_edit_member)
 
         except Exception as e:
