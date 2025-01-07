@@ -26,7 +26,7 @@ class MQTTServer:
         self._connect()
         # subscribe to the topic I need to listen to
         self._client.subscribe("mqtt_responses_cached")
-        self._client.subscribe("magnetic_lock")
+        self._client.subscribe("magnetic_lock_status")
         self._client.subscribe("login_response")
         self._client.subscribe("register_response")
         self._client.subscribe("edit_member_status/response")
@@ -58,7 +58,7 @@ class MQTTServer:
                 case "last_active_person":
                     payload = msg.payload.decode()
                     on_list_active_members_response(payload)
-                case "magnetic_lock":
+                case "magnetic_lock_status":
                     payload = msg.payload.decode()
                     on_magnetic_lock_response(payload)
                 case "login_response":

@@ -73,16 +73,16 @@ class GuiBackend(QObject):
     notificationSignal = Signal(str) #to show the notifications
     magneticLockSignal = Signal(bool) #to show the door status
     defaultLoginSuccess = Signal() #if the default login was successful
+    newMemberSignal = Signal()
+    editMemberSignal = Signal()
+    deleteMemberSignal = Signal()
 
     members = []  #the array to keep the members
     picture_path_server = "" #the path to the face pictures of a member
 
-    '''Function that triggers notifications'''
-    def trigger_notification(self, message):
-        self.notificationSignal.emit(message)
-
     def __init__(self, mqtt: MQTTServer):
         super().__init__()
+        self._mqtt = mqtt
         self._user_commands = UserCommands(mqtt)
         self._picture_count = 0
         self.pictures_dir = "/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/images"
@@ -98,6 +98,10 @@ class GuiBackend(QObject):
         # Configure capture session
         self.capture_session.setCamera(self.camera)
         self.capture_session.setImageCapture(self.image_capture)
+
+    '''Function that triggers notifications'''
+    def trigger_notification(self, message):
+        self.notificationSignal.emit(message)
 
     '''Login function'''
     @Slot(str, str)
@@ -351,6 +355,8 @@ class GuiBackend(QObject):
     def new_member_button(self, name, status):
         # picture_path_server = "/home/ubuntu/images/member@_two" # make it dynamic
         pictures_dir = "/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/images"
+        full_name = ""
+        # self.trigger_notification("Please wait :)")
         try:
             pictures = [
                 os.path.join(pictures_dir, f)
@@ -366,6 +372,7 @@ class GuiBackend(QObject):
             name = values[0] if len(values) >= 1 else ""
             surname = values[1] if len(values) >= 2 else ""
             self.picture_path_server = f"/home/ubuntu/images/{name}_{surname}"
+            full_name = name + " " + surname
 
             try:
                 file_transfer = FileTransfer(name, surname, pictures_dir)
@@ -382,9 +389,12 @@ class GuiBackend(QObject):
                     file.write("")
             except Exception as e:
                 logger.debug(f"Error editing the file: {str(e)}")
-            self._user_commands.create_new_member(name, pictures_dir, self.picture_path_server, status)
-            self.trigger_notification("Please wait :)")
-            time.sleep(1)
+            if status == "always":
+                status = "authorized"
+
+            self._user_commands.create_new_member(full_name, pictures_dir, self.picture_path_server, status)
+            self.trigger_notification("Please wait")
+            time.sleep(15)
             self.clear_pictures_directory()
 
             with open(f"mqtt_responses_cached/general_commands_authorized.csv", "r") as file:
@@ -397,10 +407,12 @@ class GuiBackend(QObject):
             match new_member_code:
                 case ResponseCodes.OK:
                     self.trigger_notification("New member has been created!")
+                    self.newMemberSignal.emit()
                     self.trigger_notification("Please reload the page")
                     logger.debug("New member was created")
                 case ResponseCodes.FAILED:
-                    self.trigger_notification("Failed to create new member")
+                    # self.trigger_notification("Failed to create new member")
+                    self.newMemberSignal.emit()
                     logger.debug("Failed to create new member")
                 case _:
                     self.trigger_notification("Please try again!")
@@ -411,16 +423,24 @@ class GuiBackend(QObject):
 
     '''Function to edit a member'''
     @Slot(str, str)
-    def edit_member_button(self, id, new_status):
+    def edit_member_button(self, member_id, new_status):
         try:
             try:
                 with open("mqtt_responses_cached/general_commands_authorized.csv", "w") as file:
                     file.write("")
             except Exception as e:
                 logger.debug(f"Error editing the file: {str(e)}")
-            self._user_commands.change_member(id, new_status)
-            time.sleep(1)
-            self.trigger_notification("Please wait :)")
+
+            if new_status == "always":
+                new_status = "authorized"
+            elif new_status == "no access":
+                new_status = "not_authorized"
+            else:
+                new_status = "temporary"
+
+            self._user_commands.change_member(member_id, new_status)
+            time.sleep(3)
+            # self.trigger_notification("Please wait :)")
             with open(f"mqtt_responses_cached/general_commands_authorized.csv", "r") as file:
                 response = file.read().strip()
             try:
@@ -431,10 +451,11 @@ class GuiBackend(QObject):
             match edit_member_code:
                 case ResponseCodes.OK:
                     self.trigger_notification("Member has been edited!")
-                    self.trigger_notification("Please reload the page")
+                    self.editMemberSignal.emit()
                     logger.debug("Member was edited")
                 case ResponseCodes.FAILED:
-                    self.trigger_notification("Failed to edit member")
+                    # self.trigger_notification("Failed to edit member")
+                    self.editMemberSignal.emit()
                     logger.debug("Failed to edit member")
                 case _:
                     self.trigger_notification("Please try again!")
@@ -450,6 +471,7 @@ class GuiBackend(QObject):
             with open("mqtt_responses_cached/general_commands_authorized.csv", "w") as file:
                 file.write("")
             self._user_commands.delete_member(member_id)
+            time.sleep(1)
             with open(f"mqtt_responses_cached/general_commands_authorized.csv", "r") as file:
                 response = file.read().strip()
             try:
@@ -460,7 +482,7 @@ class GuiBackend(QObject):
             match delete_member_code:
                 case ResponseCodes.OK:
                     self.trigger_notification("Member has been deleted")
-                    self.trigger_notification("Please reload the page")
+                    self.deleteMemberSignal.emit()
                     logger.debug("Member was deleted")
                 case ResponseCodes.FAILED:
                     self.trigger_notification("Failed to delete member")
@@ -588,3 +610,21 @@ class GuiBackend(QObject):
                     self.magneticLockSignal.emit(False)
         except Exception as e:
             logger.debug(f"Error lock listener: {str(e)}")
+
+    @Slot()
+    def on_lock_unlock(self):
+        try:
+            with open(f"mqtt_responses_cached/magnetic_lock_authorized.csv", "r") as file:
+                response = file.read().strip()
+            try:
+                if response == "open":
+                    magnetic_lock_code = MagneticLockResponseCodes.CLOSE
+                else:
+                    magnetic_lock_code = MagneticLockResponseCodes.OPEN
+            except Exception:
+                magnetic_lock_code = MagneticLockResponseCodes.CLOSE
+
+            self._mqtt.send_message(str(magnetic_lock_code), "magnetic_lock")
+
+        except Exception as e:
+            logger.debug(f"Error switch_change: {str(e)}")

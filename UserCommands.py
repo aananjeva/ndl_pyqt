@@ -30,7 +30,7 @@ class UserCommands:
         self._topic_ask_press_button = "press_button_ask"
         self._topic_ask_new_member = "add_member"
         self._topic_ask_change_password = "change_password"
-        self._topic_ask_lock_unlock = "magnetic_lock"
+        self._topic_ask_lock_unlock = "magnetic_lock_status"
         self._topic_ask_all_members = "all_members"
         self._topic_ask_active_members = "active_members"
         self._topic_delete_member = "delete_member"
@@ -150,6 +150,7 @@ class UserCommands:
             member_request = {"value": member_data_json, "session_token": self._token}
 
             member_json = json.dumps(member_request)
+            logger.debug(member_json)
             self._mqtt_client.send_message(member_json, self._topic_ask_new_member)
             print(f"New member {member_name} added with status {status}.")
 
@@ -177,9 +178,6 @@ class UserCommands:
         except Exception as e:
             raise e
 
-    def lock_unlock(self, current_state):
-        pass
-
     def active_members(self):
         try:
             active_members_request = {"value": "", "session_token": self._token}
@@ -187,7 +185,6 @@ class UserCommands:
             self._mqtt_client.send_message(active_members_data_json, self._topic_ask_active_members)
         except Exception as e:
             raise e
-
 
     def all_members(self):
         try:
@@ -198,14 +195,8 @@ class UserCommands:
         except Exception as e:
             raise e
 
-    #TODO
     def delete_member(self, member_id):
         try:
-            # delete_data = {
-            #     "id": member_id
-            # }
-            # delete_data_json = json.dumps(delete_data)
-
             delete_request = {"value": member_id, "session_token": self._token}
 
             delete_json = json.dumps(delete_request)
@@ -215,18 +206,17 @@ class UserCommands:
         except Exception as e:
             raise e
 
-    #TODO
     def change_member(self, member_id, member_status):
         try:
-            # if member_status.lower() == "temporary":
-            #     date = self.read_file_to_variable("/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/date/selected_datetime.txt")
-            # else:
-            #     date = ""
+            if member_status.lower() == "temporary":
+                date = self.read_file_to_variable("/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/date/selected_datetime.txt")
+            else:
+                date = ""
 
             change_data = {
                 "id": member_id,
                 "new_status": member_status,
-                # "date": date
+                "date": date
             }
             change_request = {"value": change_data, "session_token": self._token}
             change_json = json.dumps(change_request)

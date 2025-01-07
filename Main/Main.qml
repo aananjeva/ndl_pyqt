@@ -82,11 +82,24 @@ ApplicationWindow {
             pictureCountDisplay.text = "Has been taken " + backend.pictureCount + "/6 pictures";
             finishButton.enabled = backend.pictureCount === 6;
         }
-        // onUsernameSignal: {
-        //     username = python.username() // Update the property with the emitted username
-        // }
+
         onMagneticLockSignal: {
             doorSwitch.checked = magneticLockSignal;
+        }
+
+        onNewMemberSignal: {
+            stackView.push(membersPage)
+            python.list_all_members_gui()
+        }
+
+        onEditMemberSignal: {
+            stackView.push(membersPage)
+            python.list_all_members_gui()
+        }
+
+        onDeleteMemberSignal: {
+            editMemberDialog.close()
+            python.list_all_members_gui()
         }
 
     }
@@ -469,7 +482,7 @@ ApplicationWindow {
                     // }
 
                     onCheckedChanged: {
-                        // python.on_lock_unlock_button_click(doorSwitch.checked)
+                        python.on_lock_unlock()
                     }
                     Layout.alignment: Qt.AlignHCenter
                 }
@@ -897,7 +910,6 @@ ApplicationWindow {
                 editMemberDialog.id,
                 statusComboBox.currentText
             )
-            editMemberDialog.close();
         }
 
         // Action for Cancel Button
@@ -932,7 +944,6 @@ ApplicationWindow {
                 // Name Field
                 RowLayout {
                     spacing: 10
-                    Layout.margins: 30
                     Text {
                         text: "Name:"
                         font.pixelSize: 16
@@ -948,7 +959,6 @@ ApplicationWindow {
                 // Status Field
                 RowLayout {
                     spacing: 10
-                    Layout.margins: 30
                     Text {
                         text: "Status:"
                         font.pixelSize: 16
@@ -964,7 +974,6 @@ ApplicationWindow {
                 // Access Remaining Field
                 RowLayout {
                     spacing: 10
-                    Layout.margins: 30
                     Text {
                         text: "Access Remaining:"
                         font.pixelSize: 16
@@ -990,7 +999,7 @@ ApplicationWindow {
                         id: statusComboBox
                         width: 300
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                        model: ["always", "temporary", "not authorized"]
+                        model: ["always", "temporary", "no access"]
 
                         onCurrentIndexChanged: {
                             if (currentIndex === 1) { // Temporary selected
@@ -1022,10 +1031,53 @@ ApplicationWindow {
                             anchors.centerIn: parent
                         }
                         onClicked: {
-                            python.delete_member_button(editMemberDialog.id)
+                            // python.delete_member_button(editMemberDialog.id)
+                            confirmDeleteMemberDialog.open()
                         }
                     }
                 }
+            }
+        }
+    }
+
+    Dialog{
+        id: confirmDeleteMemberDialog
+        width: 300
+        height: 300
+        anchors.centerIn: parent
+        standardButtons: DialogButtonBox.Ok | DialogButtonBox.Cancel
+
+        property string id: ""
+
+        // Action for OK Button
+        onAccepted: {
+            python.delete_member_button(confirmDeleteMemberDialog.id)
+        }
+
+        // Action for Cancel Button
+        onRejected: {
+            confirmDeleteMemberDialog.close();  // Simply close the dialog
+        }
+
+        Rectangle {
+            color: "white"
+            anchors.fill: parent
+            anchors.centerIn: parent  // Center the rectangle within the dialog
+            radius: 10  // Optional: Add rounded corners for a nice effect
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.centerIn: parent
+
+                // Header
+                Text {
+                    text: "Are you sure you want to delete a member?"
+                    font.bold: true
+                    font.pixelSize: 18
+                    horizontalAlignment: Text.AlignHCenter
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
             }
         }
     }
@@ -1057,7 +1109,7 @@ ApplicationWindow {
                     color: "white"
                 }
                 onClicked: {
-                    stackView.pop()
+                    stackView.push(membersPage)
                 }
             }
 
@@ -1115,7 +1167,7 @@ ApplicationWindow {
                         id: statusComboBox
                         width: 300
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                        model: ["authorized", "temporary"]
+                        model: ["always", "temporary"]
 
                         onCurrentIndexChanged: {
                             if (currentIndex === 1) { // Temporary selected
@@ -1143,8 +1195,6 @@ ApplicationWindow {
                         newMemberNameField.text,
                         statusComboBox.currentText
                     )
-                    stackView.push(membersPage)
-                    python.list_all_members_gui()
                 }
             }
         }
@@ -1294,13 +1344,26 @@ ApplicationWindow {
             ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: 20
-                spacing: 20
+                spacing: 10
 
                 // Title Text
                 Text {
                     text: "Take 6 Pictures"
                     font.pixelSize: 24
                     font.bold: true
+                    horizontalAlignment: Text.AlignHCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+
+                Text {
+                    text: "To take a picture please press c"
+                    font.pixelSize: 18
+                    horizontalAlignment: Text.AlignHCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+                Text {
+                    text: "To quite the camera press q"
+                    font.pixelSize: 18
                     horizontalAlignment: Text.AlignHCenter
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
@@ -1350,4 +1413,6 @@ ApplicationWindow {
             }
         }
     }
+
+
 }

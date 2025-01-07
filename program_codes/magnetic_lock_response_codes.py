@@ -5,7 +5,11 @@ class MagneticLockResponseCodes(Enum):
     CLOSE = 0
 
     def __str__(self):
-        return self.name
+        match self:
+            case self.OPEN:
+                return "open"
+            case self.CLOSE:
+                return "close"
 
     @classmethod
     def string_to_enum(cls, string):
@@ -20,3 +24,4 @@ class MagneticLockResponseCodes(Enum):
                     raise ValueError
         except ValueError:
             raise Exception("The lock is closed")
+
