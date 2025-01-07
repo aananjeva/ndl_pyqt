@@ -364,8 +364,8 @@ class GuiBackend(QObject):
                 if os.path.isfile(os.path.join(pictures_dir, f)) and f.endswith((".jpg", ".png"))
             ]
 
-            if len(pictures) != 6:
-                logger.debug("Exactly 6 pictures are required")
+            if len(pictures) != 4:
+                logger.debug("Exactly 4 pictures are required")
 
             name_trimmed = name.strip().split(" ")
             values = [x for x in name_trimmed if x]
@@ -393,7 +393,6 @@ class GuiBackend(QObject):
                 status = "authorized"
 
             self._user_commands.create_new_member(full_name, pictures_dir, self.picture_path_server, status)
-            self.trigger_notification("Please wait")
             time.sleep(15)
             self.clear_pictures_directory()
 
@@ -523,14 +522,14 @@ class GuiBackend(QObject):
                         f for f in os.listdir(self.pictures_dir) if f.endswith(".jpg")
                     ]
 
-                    if len(pictures) < 6:
+                    if len(pictures) < 4:
                         file_path = os.path.join(self.pictures_dir, f"picture_{len(pictures) + 1}.jpg")
                         cv2.imwrite(file_path, frame)
                         self._picture_count = len(pictures) + 1
                         self.pictureCountChanged.emit()  # Notify QML of the updated count
                         logger.debug(f"Picture saved to {file_path}")
                     else:
-                        logger.debug("6 pictures already taken.")
+                        logger.debug("4 pictures already taken.")
                         break
 
                 # If 'q' is pressed, quit the camera
@@ -566,27 +565,27 @@ class GuiBackend(QObject):
         ]
         pictures = sorted(pictures, key=lambda x: os.path.getctime(os.path.join(self.default_camera_dir, x)))
 
-        for i, picture in enumerate(pictures[:6]):  # Only take the latest 6 pictures
+        for i, picture in enumerate(pictures[:4]):  # Only take the latest 4 pictures
             source_path = os.path.join(self.default_camera_dir, picture)
             target_path = os.path.join(self.pictures_dir, f"picture_{i + 1}.jpg")
             move(source_path, target_path)
             logger.debug(f"Moved: {source_path} -> {target_path}")
 
-        self._picture_count = len(pictures[:6])
-        if self._picture_count < 6:
-            QMessageBox.warning(None, "Incomplete", f"Only {self._picture_count}/6 pictures were found.")
+        self._picture_count = len(pictures[:4])
+        if self._picture_count < 4:
+            QMessageBox.warning(None, "Incomplete", f"Only {self._picture_count}/4 pictures were found.")
         else:
-            QMessageBox.information(None, "Success", "All 6 pictures have been moved to the app folder!")
+            QMessageBox.information(None, "Success", "All 4 pictures have been moved to the app folder!")
 
     @Slot()
     def check_picture_completion(self):
         pictures = [
             f for f in os.listdir(self.pictures_dir) if f.endswith((".jpg", ".png")) and not f.startswith(".")
         ]
-        if len(pictures) < 6:
-            QMessageBox.warning(None, "Incomplete", f"You only have {len(pictures)}/6 pictures. Please take more!")
+        if len(pictures) < 4:
+            QMessageBox.warning(None, "Incomplete", f"You only have {len(pictures)}/4 pictures. Please take more!")
         else:
-            QMessageBox.information(None, "Complete", "You have taken all 6 pictures!")
+            QMessageBox.information(None, "Complete", "You have taken all 4 pictures!")
 
     @Slot()
     def lock_listener(self):

@@ -131,7 +131,7 @@ class UserCommands:
 
     def create_new_member(self, member_name, path_pictures, path_pictures_server, status):
         try:
-            if len(os.listdir(path_pictures)) != 6:
+            if len(os.listdir(path_pictures)) != 4:
                 raise Exception("Exactly 6 pictures are required.")
 
             if status.lower() == "temporary":
@@ -152,10 +152,10 @@ class UserCommands:
             member_json = json.dumps(member_request)
             logger.debug(member_json)
             self._mqtt_client.send_message(member_json, self._topic_ask_new_member)
-            print(f"New member {member_name} added with status {status}.")
+            logger.debug(f"New member {member_name} added with status {status}.")
 
         except Exception as e:
-            print(f"Error in create_new_member: {e}")
+            logger.debug(f"Error in create_new_member: {e}")
             raise
 
     def change_password(self, new_password):
@@ -200,7 +200,7 @@ class UserCommands:
             delete_request = {"value": member_id, "session_token": self._token}
 
             delete_json = json.dumps(delete_request)
-            print(delete_json)
+            logger.debug(delete_json)
             self._mqtt_client.send_message(delete_json, self._topic_delete_member)
 
         except Exception as e:
@@ -220,7 +220,7 @@ class UserCommands:
             }
             change_request = {"value": change_data, "session_token": self._token}
             change_json = json.dumps(change_request)
-            print(change_json)
+            logger.debug(change_json)
             self._mqtt_client.send_message(change_json, self._topic_edit_member)
 
         except Exception as e:

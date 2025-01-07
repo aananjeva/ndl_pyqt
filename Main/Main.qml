@@ -79,8 +79,8 @@ ApplicationWindow {
             }
         }
         onPictureCountChanged: {
-            pictureCountDisplay.text = "Has been taken " + backend.pictureCount + "/6 pictures";
-            finishButton.enabled = backend.pictureCount === 6;
+            pictureCountDisplay.text = "Has been taken " + backend.pictureCount + "/4 pictures";
+            finishButton.enabled = backend.pictureCount === 4;
         }
 
         onMagneticLockSignal: {
@@ -134,11 +134,11 @@ ApplicationWindow {
             anchors.fill: parent
             color: "white"
 
-
             ColumnLayout {
                 anchors.centerIn: parent
                 spacing: 20
 
+                // Title Text
                 Text {
                     text: "Welcome to SmartLock"
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
@@ -148,6 +148,7 @@ ApplicationWindow {
                     horizontalAlignment: Text.AlignHCenter
                 }
 
+                // Username Field
                 Rectangle {
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                     width: 300
@@ -166,25 +167,47 @@ ApplicationWindow {
                     }
                 }
 
+                // Password Field with Toggle
+                // Password Field with Toggle
                 Rectangle {
                     width: 300
                     height: 50
-                    color: "white"
+                    color: "transparent"
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    border.color: "gray"
-                    border.width: 1
 
-                    TextField {
-                        id: passwordField
-                        placeholderText: "password"
+                    RowLayout {
                         anchors.fill: parent
-                        padding: 10
-                        font.pointSize: 18
-                        echoMode: TextInput.Password
-                        verticalAlignment: TextInput.AlignVCenter
+                        spacing: 5
+
+                        TextField {
+                            id: passwordField
+                            placeholderText: "password"
+                            Layout.fillWidth: true
+                            padding: 10
+                            font.pointSize: 18
+                            echoMode: passwordVisibilityCheckBox.checked ? TextInput.Normal : TextInput.Password
+                            verticalAlignment: TextInput.AlignVCenter
+                            background: Rectangle {
+                                color: "#f5f5f5"
+                                radius: 8
+                                border.color: "#dcdcdc"
+                                border.width: 1
+                            }
+                        }
+
+                        CheckBox {
+                            id: passwordVisibilityCheckBox
+                            text: passwordVisibilityCheckBox.checked ? "👁️" : "🔒"
+                            font.pixelSize: 16
+                            ToolTip.text: passwordVisibilityCheckBox.checked ? "Hide Password" : "Show Password"
+                            ToolTip.visible: hovered
+                            Layout.alignment: Qt.AlignVCenter
+                        }
                     }
                 }
 
+
+                // Login Button
                 ColumnLayout {
                     spacing: 10
                     Layout.alignment: Qt.AlignHCenter
@@ -203,26 +226,27 @@ ApplicationWindow {
                         }
                     }
 
+                    // Default Login
                     Text {
                         id: forgotPasswordButton
                         text: "Default Login"
                         font.pointSize: 12
-                        color: "black"  // Change text color to indicate it's clickable
+                        color: "black"
                         Layout.alignment: Qt.AlignHCenter
                         MouseArea {
                             anchors.fill: parent
                             onClicked: {
                                 stackView.push(defaultPasswordPage)
-                                // python.forgot_password_button()
                             }
                         }
                     }
 
+                    // Register Page Link
                     Text {
                         id: registerButton
                         text: "I do not have an account"
                         font.pointSize: 12
-                        color: "black"  // Change text color to indicate it's clickable
+                        color: "black"
                         Layout.alignment: Qt.AlignHCenter | Qt.AlignBottom
                         MouseArea {
                             anchors.fill: parent
@@ -1040,18 +1064,17 @@ ApplicationWindow {
         }
     }
 
-    Dialog{
+    Dialog {
         id: confirmDeleteMemberDialog
         width: 300
         height: 300
         anchors.centerIn: parent
         standardButtons: DialogButtonBox.Ok | DialogButtonBox.Cancel
 
-        property string id: ""
 
         // Action for OK Button
         onAccepted: {
-            python.delete_member_button(confirmDeleteMemberDialog.id)
+            python.delete_member_button(editMemberDialog.id)
         }
 
         // Action for Cancel Button
@@ -1071,9 +1094,8 @@ ApplicationWindow {
 
                 // Header
                 Text {
-                    text: "Are you sure you want to delete a member?"
-                    font.bold: true
-                    font.pixelSize: 18
+                    text: "Are you sure you want\nto delete a member?"
+                    font.pixelSize: 15
                     horizontalAlignment: Text.AlignHCenter
                     Layout.alignment: Qt.AlignHCenter
                 }
@@ -1086,11 +1108,13 @@ ApplicationWindow {
     Component {
         id: newMemberPage
 
+
         Item {
             id: newMemberItem
             width: 500
             height: 650
             anchors.centerIn: parent
+
 
             Rectangle {
                 id: overlay
@@ -1175,6 +1199,13 @@ ApplicationWindow {
                             }
                         }
                     }
+                }
+
+                Text {
+                    text: "You will have to wait 15 seconds\nfor new member to be created"
+                    font.pointSize: 15
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    color: "black"
                 }
             }
 
@@ -1341,60 +1372,63 @@ ApplicationWindow {
             anchors.fill: parent
             color: "white"
 
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: 20
-                spacing: 10
+            Column {
+                anchors.centerIn: parent
+                spacing: 15
+                width: parent.width * 0.8
 
                 // Title Text
                 Text {
-                    text: "Take 6 Pictures"
+                    text: "📸 Take 4 Pictures"
                     font.pixelSize: 24
                     font.bold: true
                     horizontalAlignment: Text.AlignHCenter
                     anchors.horizontalCenter: parent.horizontalCenter
+                    color: "#2c3e50"
                 }
 
+                // Instructions Text
                 Text {
-                    text: "To take a picture please press c"
-                    font.pixelSize: 18
+                    text: "• Press 'C' to take a picture\n• Press 'Q' to quit the camera"
+                    font.pixelSize: 16
                     horizontalAlignment: Text.AlignHCenter
                     anchors.horizontalCenter: parent.horizontalCenter
-                }
-                Text {
-                    text: "To quite the camera press q"
-                    font.pixelSize: 18
-                    horizontalAlignment: Text.AlignHCenter
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    color: "#7f8c8d"
                 }
 
                 // Take Picture Button
                 Button {
                     text: "Take Picture"
-                    anchors.centerIn: parent
+                    width: parent.width * 0.6
+                    height: 40
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    font.pixelSize: 16
                     onClicked: {
-                        python.take_picture()  // Call the Python function to capture and save a picture
+                        python.take_picture()
                     }
                 }
 
-                // Picture Count Text
+                // Picture Count Display
                 Text {
                     id: pictureCountDisplay
-                    text: "Has been taken " + python.pictureCount + "/6 pictures"
-                    font.pixelSize: 18
+                    text: "Pictures taken: " + python.pictureCount + "/4"
+                    font.pixelSize: 16
                     horizontalAlignment: Text.AlignHCenter
                     anchors.horizontalCenter: parent.horizontalCenter
+                    color: "#34495e"
                 }
 
-                // Finish and Cancel Buttons Row
+                // Finish and Cancel Buttons
                 RowLayout {
-                    spacing: 20
+                    spacing: 10
                     anchors.horizontalCenter: parent.horizontalCenter
 
                     Button {
                         id: finishButton
                         text: "Finish"
-                        enabled: backend.pictureCount === 6  // Enable only when 6 pictures are present
+                        width: 120
+                        enabled: backend.pictureCount === 4
+                        font.pixelSize: 14
                         onClicked: {
                             console.log("Finish button clicked!");
                             stackView.push(newMemberPage)
@@ -1404,6 +1438,8 @@ ApplicationWindow {
                     Button {
                         id: cancelButton
                         text: "Cancel"
+                        width: 120
+                        font.pixelSize: 14
                         onClicked: {
                             python.clear_pictures_directory()
                             stackView.push(newMemberPage)
@@ -1413,6 +1449,7 @@ ApplicationWindow {
             }
         }
     }
+
 
 
 }
