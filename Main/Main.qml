@@ -104,7 +104,7 @@ ApplicationWindow {
 
     }
 
-    // introPage layout
+    // introPage layout PERFECT
     Component {
         id: introPage
 
@@ -126,7 +126,7 @@ ApplicationWindow {
         }
     }
 
-    // loginPage layout
+    // loginPage layout PERFECT
     Component {
         id: loginPage
 
@@ -152,9 +152,10 @@ ApplicationWindow {
                 Rectangle {
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                     width: 300
-                    height: 50
-                    color: "white"
-                    border.color: "gray"
+                    height: 35
+                    color: "#f5f5f5" // Light grey background
+                    radius: 8        // Rounded corners
+                    border.color: "#dcdcdc"
                     border.width: 1
 
                     TextField {
@@ -164,11 +165,13 @@ ApplicationWindow {
                         padding: 10
                         font.pointSize: 18
                         verticalAlignment: TextInput.AlignVCenter
+                        background: Rectangle {
+                            color: "transparent" // Keeps parent background visible
+                        }
                     }
                 }
 
-                // Password Field with Toggle
-                // Password Field with Toggle
+
                 Rectangle {
                     width: 300
                     height: 50
@@ -183,9 +186,8 @@ ApplicationWindow {
                             id: passwordField
                             placeholderText: "password"
                             Layout.fillWidth: true
-                            padding: 10
                             font.pointSize: 18
-                            echoMode: passwordVisibilityCheckBox.checked ? TextInput.Normal : TextInput.Password
+                            echoMode: passwordVisibilityButton1.checked ? TextInput.Normal : TextInput.Password
                             verticalAlignment: TextInput.AlignVCenter
                             background: Rectangle {
                                 color: "#f5f5f5"
@@ -195,13 +197,16 @@ ApplicationWindow {
                             }
                         }
 
-                        CheckBox {
-                            id: passwordVisibilityCheckBox
-                            text: passwordVisibilityCheckBox.checked ? "👁️" : "🔒"
+                        Button {
+                            id: passwordVisibilityButton1
+                            checkable: true
+                            text: passwordVisibilityButton1.checked ? "🔓" : "🔒"
                             font.pixelSize: 16
-                            ToolTip.text: passwordVisibilityCheckBox.checked ? "Hide Password" : "Show Password"
+                            background: Rectangle {
+                                color: "transparent"
+                            }
+                            ToolTip.text: passwordVisibilityButton1.checked ? "Hide Password" : "Show Password"
                             ToolTip.visible: hovered
-                            Layout.alignment: Qt.AlignVCenter
                         }
                     }
                 }
@@ -213,11 +218,14 @@ ApplicationWindow {
                     Layout.alignment: Qt.AlignHCenter
 
                     Button {
-                        text: "Login"
-                        width: 300
-                        height: 50
+                        text: "login"
                         Layout.preferredWidth: 300
                         Layout.preferredHeight: 50
+                        font.pointSize: 16
+                        background: Rectangle {
+                            color: "#DAF1DE" // Light green
+                            radius: 8
+                        }
                         onClicked: {
                             python.login_button(
                                 usernameField.text,
@@ -226,10 +234,11 @@ ApplicationWindow {
                         }
                     }
 
+
                     // Default Login
                     Text {
                         id: forgotPasswordButton
-                        text: "Default Login"
+                        text: "\n\n\n\n\n\n\n\n\nDefault Login"
                         font.pointSize: 12
                         color: "black"
                         Layout.alignment: Qt.AlignHCenter
@@ -260,7 +269,7 @@ ApplicationWindow {
         }
     }
 
-    // defaultPasswordPage layout
+    // defaultPasswordPage layout PERFECT
     Component {
         id: defaultPasswordPage
 
@@ -297,10 +306,12 @@ ApplicationWindow {
                 }
 
                 Rectangle {
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                     width: 300
-                    height: 50
-                    color: "white"
-                    border.color: "gray"
+                    height: 35
+                    color: "#f5f5f5"
+                    radius: 8
+                    border.color: "#dcdcdc"
                     border.width: 1
 
                     TextField {
@@ -310,32 +321,61 @@ ApplicationWindow {
                         padding: 10
                         font.pointSize: 18
                         verticalAlignment: TextInput.AlignVCenter
+                        background: Rectangle {
+                            color: "transparent" // Keeps parent background visible
+                        }
                     }
                 }
 
                 Rectangle {
                     width: 300
                     height: 50
-                    color: "white"
-                    border.color: "gray"
-                    border.width: 1
+                    color: "transparent"
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
 
-                    TextField {
-                        id: defaultPasswordField
-                        placeholderText: "default password"
+                    RowLayout {
                         anchors.fill: parent
-                        padding: 10
-                        font.pointSize: 18
-                        verticalAlignment: TextInput.AlignVCenter
+                        spacing: 5
+
+                        TextField {
+                            id: defaultPasswordField
+                            placeholderText: "password"
+                            Layout.fillWidth: true
+                            font.pointSize: 18
+                            echoMode: passwordVisibilityButton2.checked ? TextInput.Normal : TextInput.Password
+                            verticalAlignment: TextInput.AlignVCenter
+                            background: Rectangle {
+                                color: "#f5f5f5"
+                                radius: 8
+                                border.color: "#dcdcdc"
+                                border.width: 1
+                            }
+                        }
+
+                        Button {
+                            id: passwordVisibilityButton2
+                            checkable: true
+                            text: passwordVisibilityButton2.checked ? "🔓" : "🔒"
+                            font.pixelSize: 16
+                            background: Rectangle {
+                                color: "transparent"
+                            }
+                            ToolTip.text: passwordVisibilityButton2.checked ? "Hide Password" : "Show Password"
+                            ToolTip.visible: hovered
+                        }
                     }
                 }
 
+
                 Button {
-                    text: "Enter"
-                    width: 300
-                    height: 50
+                    text: "enter"
                     Layout.preferredWidth: 300
                     Layout.preferredHeight: 50
+                    font.pointSize: 16
+                    background: Rectangle {
+                        color: "#DAF1DE" // Light green
+                        radius: 8
+                    }
                     onClicked: {
                         python.default_login_button(
                             defaultUsernameField.text,
@@ -347,7 +387,7 @@ ApplicationWindow {
         }
     }
 
-    // registerPage layout
+    // registerPage layout PERFECT
     Component {
         id: registerPage
 
@@ -369,7 +409,7 @@ ApplicationWindow {
             }
 
             ColumnLayout {
-                spacing: 20   // Space between elements
+                spacing: 20
                 anchors.centerIn: parent
 
                 Text {
@@ -384,9 +424,10 @@ ApplicationWindow {
                 Rectangle {
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                     width: 300
-                    height: 50
-                    color: "white"
-                    border.color: "gray"
+                    height: 35
+                    color: "#f5f5f5"
+                    radius: 8
+                    border.color: "#dcdcdc"
                     border.width: 1
 
                     TextField {
@@ -396,26 +437,48 @@ ApplicationWindow {
                         padding: 10
                         font.pointSize: 18
                         verticalAlignment: TextInput.AlignVCenter
+                        background: Rectangle {
+                            color: "transparent" // Keeps parent background visible
+                        }
                     }
                 }
 
                 Rectangle {
+                    width: 300
+                    height: 50
+                    color: "transparent"
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    width: 300
-                    height: 50
-                    color: "white"
-                    border.color: "gray"
-                    border.width: 1
 
-
-                    TextField {
-                        id: registerPasswordField
-                        placeholderText: "password"
+                    RowLayout {
                         anchors.fill: parent
-                        padding: 10
-                        font.pointSize: 18
-                        echoMode: TextInput.Password
-                        verticalAlignment: TextInput.AlignVCenter
+                        spacing: 5
+
+                        TextField {
+                            id: registerPasswordField
+                            placeholderText: "password"
+                            Layout.fillWidth: true
+                            font.pointSize: 18
+                            echoMode: passwordVisibilityButton3.checked ? TextInput.Normal : TextInput.Password
+                            verticalAlignment: TextInput.AlignVCenter
+                            background: Rectangle {
+                                color: "#f5f5f5"
+                                radius: 8
+                                border.color: "#dcdcdc"
+                                border.width: 1
+                            }
+                        }
+
+                        Button {
+                            id: passwordVisibilityButton3
+                            checkable: true
+                            text: passwordVisibilityButton3.checked ? "🔓" : "🔒"
+                            font.pixelSize: 16
+                            background: Rectangle {
+                                color: "transparent"
+                            }
+                            ToolTip.text: passwordVisibilityButton3.checked ? "Hide Password" : "Show Password"
+                            ToolTip.visible: hovered
+                        }
                     }
                 }
 
@@ -423,29 +486,52 @@ ApplicationWindow {
                 Rectangle {
                     width: 300
                     height: 50
-                    color: "white"
-                    border.color: "gray"
-                    border.width: 1
+                    color: "transparent"
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
 
-
-                    TextField {
-                        id: repeatPasswordField
-                        placeholderText: "repeat password"
+                    RowLayout {
                         anchors.fill: parent
-                        padding: 10
-                        font.pointSize: 18
-                        echoMode: TextInput.Password
-                        verticalAlignment: TextInput.AlignVCenter
+                        spacing: 5
+
+                        TextField {
+                            id: repeatPasswordField
+                            placeholderText: "password"
+                            Layout.fillWidth: true
+                            font.pointSize: 18
+                            echoMode: passwordVisibilityButton4.checked ? TextInput.Normal : TextInput.Password
+                            verticalAlignment: TextInput.AlignVCenter
+                            background: Rectangle {
+                                color: "#f5f5f5"
+                                radius: 8
+                                border.color: "#dcdcdc"
+                                border.width: 1
+                            }
+                        }
+
+                        Button {
+                            id: passwordVisibilityButton4
+                            checkable: true
+                            text: passwordVisibilityButton4.checked ? "🔓" : "🔒"
+                            font.pixelSize: 16
+                            background: Rectangle {
+                                color: "transparent"
+                            }
+                            ToolTip.text: passwordVisibilityButton4.checked ? "Hide Password" : "Show Password"
+                            ToolTip.visible: hovered
+                        }
                     }
                 }
 
 
                 Button {
                     text: "Register"
-                    width: 300
-                    height: 50
                     Layout.preferredWidth: 300
                     Layout.preferredHeight: 50
+                    font.pointSize: 16
+                    background: Rectangle {
+                        color: "#DAF1DE" // Light green
+                        radius: 8
+                    }
                     onClicked: {
                         python.register_button(
                             registerUsernameField.text,
@@ -625,7 +711,7 @@ ApplicationWindow {
         }
     }
 
-    // settingsDialog layout
+    // settingsDialog layout PERFECT
     Dialog {
         id: settingsDialog
         width: 400
@@ -688,7 +774,7 @@ ApplicationWindow {
         }
     }
 
-    // changePasswordDialog layout
+    // changePasswordDialog layout PERFECT
     Dialog {
         id: changePasswordDialog
         width: 400
@@ -715,9 +801,8 @@ ApplicationWindow {
             color: "white"
 
             ColumnLayout {
-                anchors.fill: parent
-                spacing: 10
-                anchors.margins: 20  // Add padding inside the dialog
+                spacing: 20
+                anchors.centerIn: parent
 
                 Text {
                     text: "Change Password"
@@ -728,37 +813,130 @@ ApplicationWindow {
                     Layout.alignment: Qt.AlignHCenter
                 }
 
-                TextField {
-                    id: currentPasswordField
-                    placeholderText: "Current password"
-                    Layout.fillWidth: true
-                    font.pointSize: 18
-                    echoMode: TextInput.Password
-                    verticalAlignment: TextInput.AlignVCenter
+                Rectangle {
+                    width: 300
+                    height: 50
+                    color: "transparent"
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+
+                    RowLayout {
+                        anchors.fill: parent
+                        spacing: 5
+
+                        TextField {
+                            id: currentPasswordField
+                            placeholderText: "password"
+                            Layout.fillWidth: true
+                            font.pointSize: 18
+                            echoMode: passwordVisibilityButton5.checked ? TextInput.Normal : TextInput.Password
+                            verticalAlignment: TextInput.AlignVCenter
+                            background: Rectangle {
+                                color: "#f5f5f5"
+                                radius: 8
+                                border.color: "#dcdcdc"
+                                border.width: 1
+                            }
+                        }
+
+                        Button {
+                            id: passwordVisibilityButton5
+                            checkable: true
+                            text: passwordVisibilityButton5.checked ? "🔓" : "🔒"
+                            font.pixelSize: 16
+                            background: Rectangle {
+                                color: "transparent"
+                            }
+                            ToolTip.text: passwordVisibilityButton5.checked ? "Hide Password" : "Show Password"
+                            ToolTip.visible: hovered
+                        }
+                    }
                 }
 
-                TextField {
-                    id: newPasswordField
-                    placeholderText: "New password"
-                    Layout.fillWidth: true
-                    font.pointSize: 18
-                    echoMode: TextInput.Password
-                    verticalAlignment: TextInput.AlignVCenter
+
+                Rectangle {
+                    width: 300
+                    height: 50
+                    color: "transparent"
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+
+                    RowLayout {
+                        anchors.fill: parent
+                        spacing: 5
+
+                        TextField {
+                            id: newPasswordField
+                            placeholderText: "new password"
+                            Layout.fillWidth: true
+                            font.pointSize: 18
+                            echoMode: passwordVisibilityButton6.checked ? TextInput.Normal : TextInput.Password
+                            verticalAlignment: TextInput.AlignVCenter
+                            background: Rectangle {
+                                color: "#f5f5f5"
+                                radius: 8
+                                border.color: "#dcdcdc"
+                                border.width: 1
+                            }
+                        }
+
+                        Button {
+                            id: passwordVisibilityButton6
+                            checkable: true
+                            text: passwordVisibilityButton6.checked ? "🔓" : "🔒"
+                            font.pixelSize: 16
+                            background: Rectangle {
+                                color: "transparent"
+                            }
+                            ToolTip.text: passwordVisibilityButton6.checked ? "Hide Password" : "Show Password"
+                            ToolTip.visible: hovered
+                        }
+                    }
                 }
 
-                TextField {
-                    id: repeatNewPasswordField
-                    placeholderText: "Repeat new password"
-                    Layout.fillWidth: true
-                    font.pointSize: 18
-                    echoMode: TextInput.Password
-                    verticalAlignment: TextInput.AlignVCenter
+
+                Rectangle {
+                    width: 300
+                    height: 50
+                    color: "transparent"
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+
+                    RowLayout {
+                        anchors.fill: parent
+                        spacing: 5
+
+                        TextField {
+                            id: repeatNewPasswordField
+                            placeholderText: "repeat password"
+                            Layout.fillWidth: true
+                            font.pointSize: 18
+                            echoMode: passwordVisibilityButton7.checked ? TextInput.Normal : TextInput.Password
+                            verticalAlignment: TextInput.AlignVCenter
+                            background: Rectangle {
+                                color: "#f5f5f5"
+                                radius: 8
+                                border.color: "#dcdcdc"
+                                border.width: 1
+                            }
+                        }
+
+                        Button {
+                            id: passwordVisibilityButton7
+                            checkable: true
+                            text: passwordVisibilityButton7.checked ? "🔓🔓" : "🔒"
+                            font.pixelSize: 16
+                            background: Rectangle {
+                                color: "transparent"
+                            }
+                            ToolTip.text: passwordVisibilityButton7.checked ? "Hide Password" : "Show Password"
+                            ToolTip.visible: hovered
+                        }
+                    }
                 }
+
             }
         }
     }
 
-    // membersPage layout
+    // membersPage layout GOOD
     Component {
         id: membersPage
 
@@ -873,7 +1051,8 @@ ApplicationWindow {
                     Layout.alignment: Qt.AlignHCenter
                     background: Rectangle {
                         radius: 10
-                        border.color: "gray"
+                        color: "lightgray"
+                        border.color: "lightgray"
                         border.width: 1
                     }
                     onClicked: {
@@ -881,6 +1060,7 @@ ApplicationWindow {
                         python.clear_pictures_directory()
                     }
                 }
+
 
                 // Navigation Buttons
                 RowLayout {
@@ -919,7 +1099,7 @@ ApplicationWindow {
         }
     }
 
-    // editMemberDialog layout
+    // editMemberDialog layout GOOD
     Dialog {
         id: editMemberDialog
         width: 400
@@ -1064,6 +1244,7 @@ ApplicationWindow {
         }
     }
 
+    // confirmMemberDeleteDialog layout PERFECT
     Dialog {
         id: confirmDeleteMemberDialog
         width: 300
@@ -1104,7 +1285,7 @@ ApplicationWindow {
         }
     }
 
-    // newMemberPage layout
+    // newMemberPage layout GOOD
     Component {
         id: newMemberPage
 
@@ -1160,7 +1341,7 @@ ApplicationWindow {
 
                     TextField {
                         id: newMemberNameField
-                        placeholderText: "Name"
+                        placeholderText: "name"
                         anchors.fill: parent
                         padding: 10
                         font.pointSize: 18
@@ -1231,7 +1412,7 @@ ApplicationWindow {
         }
     }
 
-    // dateTimeDialog layout
+    // dateTimeDialog layout PERFECT
     Dialog {
         id: dateTimeDialog
         modal: true
@@ -1259,34 +1440,24 @@ ApplicationWindow {
 
         Rectangle {
             anchors.fill: parent
-            color: "white"
+            color: "#F9FAFB"
 
             ColumnLayout {
                 spacing: 15
                 anchors.fill: parent
                 anchors.margins: 20
 
-                // Back Button
-                Button {
-                    text: "←"
-                    font.pointSize: 20
-                    background: Rectangle {
-                        color: "transparent"
-                    }
-                    onClicked: {
-                        dateTimeDialog.visible = false
-                    }
-                }
 
                 // Date Selection
                 Text {
-                    text: "Select Date"
-                    font.pointSize: 18
+                    text: "Select Date & Time"
+                    font.pointSize: 22
+                    font.bold: true
                     color: "black"
                     Layout.alignment: Qt.AlignHCenter
                 }
 
-                RowLayout {
+                ColumnLayout {
                     spacing: 10
                     Layout.alignment: Qt.AlignHCenter
 
@@ -1325,14 +1496,6 @@ ApplicationWindow {
                         displayText: model.get(currentIndex).text
                         width: 60
                     }
-                }
-
-                // Time Selection
-                Text {
-                    text: "Select Time"
-                    font.pointSize: 18
-                    color: "black"
-                    Layout.alignment: Qt.AlignHCenter
                 }
 
                 RowLayout {
@@ -1449,7 +1612,5 @@ ApplicationWindow {
             }
         }
     }
-
-
 
 }
