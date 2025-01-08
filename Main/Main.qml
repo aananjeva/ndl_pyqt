@@ -1527,7 +1527,7 @@ ApplicationWindow {
         }
     }
 
-    // cameraPage layout
+    // cameraPage layout PERFECT
     Component {
         id: cameraPage
 
