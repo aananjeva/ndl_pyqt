@@ -25,9 +25,8 @@ class UserCommands:
         self._current_user = None
         self._stored_password = None
         # main mqtt topics
-        self._topic_ask_login = "login_ask"
+        self._topic_ask_login = "login"
         self._topic_ask_reg = "register"
-        self._topic_ask_press_button = "press_button_ask"
         self._topic_ask_new_member = "add_member"
         self._topic_ask_change_password = "change_password"
         self._topic_ask_lock_unlock = "magnetic_lock_status"
@@ -35,9 +34,6 @@ class UserCommands:
         self._topic_ask_active_members = "active_members"
         self._topic_delete_member = "delete_member"
         self._topic_edit_member = "edit_member_status"
-        self._topic_delete_user = "delete_user"
-
-
 
         with open("/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/mqtt_responses_cached/session_token", "r") as file:
             self._token = file.readline().strip()

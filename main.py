@@ -1,5 +1,6 @@
 import sys
 import mqtt as mqtt
+from daemon.lock_daemon import LockDaemon
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlApplicationEngine
 
@@ -35,6 +36,8 @@ if __name__ == "__main__":
     # Expose `MyWidget` to QML
     engine.loadFromModule("Main", "Main")
     # engine.load("/Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/Main/Main.qml")
+    thread_daemon = LockDaemon(mqtt_server)
+    thread_daemon.run()
     if not engine.rootObjects():
         sys.exit(-1)
     exit_code = app.exec()

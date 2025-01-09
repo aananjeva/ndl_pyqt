@@ -27,14 +27,14 @@ class MQTTServer:
         # subscribe to the topic I need to listen to
         self._client.subscribe("mqtt_responses_cached")
         self._client.subscribe("magnetic_lock_status")
-        self._client.subscribe("login_response")
-        self._client.subscribe("register_response")
+        self._client.subscribe("login/response")
+        self._client.subscribe("register/response")
         self._client.subscribe("edit_member_status/response")
-        self._client.subscribe("forgot_password_response")
+        self._client.subscribe("forgot_password/response")
         self._client.subscribe("last_active_person")
-        self._client.subscribe("all_members_response")
-        self._client.subscribe("add_member_response")
-        self._client.subscribe("delete_response")
+        self._client.subscribe("all_members/response")
+        self._client.subscribe("add_member/response")
+        self._client.subscribe("delete/response")
         self._client.subscribe("lock")
         self._client.subscribe("change_password/response")
 
@@ -43,25 +43,25 @@ class MQTTServer:
     def _on_message(cls, client, userdata, msg):
         try:
             match msg.topic:
-                case "register_response":
+                case "register/response":
                     payload = msg.payload.decode()
                     on_register_response(payload)
-                case "add_member_response":
+                case "add_member/response":
                     payload = msg.payload.decode()
                     on_general_commands_response(payload)
-                case "delete_response":
+                case "delete/response":
                     payload = msg.payload.decode()
                     on_general_commands_response(payload)
-                case "all_members_response":
+                case "all_members/response":
                     payload = msg.payload.decode()
                     on_list_all_members_response(payload)
                 case "last_active_person":
                     payload = msg.payload.decode()
                     on_list_active_members_response(payload)
-                case "magnetic_lock_status":
+                case "lock":
                     payload = msg.payload.decode()
                     on_magnetic_lock_response(payload)
-                case "login_response":
+                case "login/response":
                     payload = msg.payload.decode()
                     on_login_response(payload)
                 case "change_password/response":

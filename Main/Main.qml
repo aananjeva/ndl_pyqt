@@ -35,13 +35,13 @@ ApplicationWindow {
 
     Connections {
         target: python
-        onOnLoginSuccess: {
+        onLoginSuccess: {
             stackView.push(mainPage)
             python.list_active_members_gui()
             python.lock_listener()
         }
 
-        onOnRegisterSuccess: {
+        onOegisterSuccess: {
             stackView.push(mainPage)
             python.list_active_members_gui()
             python.lock_listener()
@@ -51,6 +51,11 @@ ApplicationWindow {
             stackView.push(mainPage)
             python.list_active_members_gui()
             python.lock_listener()
+        }
+
+        onChangePasswordSignal: {
+            changePasswordDialog.close()
+            stackView.push(loginPage)
         }
 
         onMembersUpdated: function (members) {
@@ -100,6 +105,10 @@ ApplicationWindow {
         onDeleteMemberSignal: {
             editMemberDialog.close()
             python.list_all_members_gui()
+        }
+
+        onSaveDateSignal: {
+            dateTimeDialog.close()
         }
 
     }
@@ -238,7 +247,7 @@ ApplicationWindow {
                     // Default Login
                     Text {
                         id: forgotPasswordButton
-                        text: "\n\n\n\n\n\n\n\n\nDefault Login"
+                        text: "\n\n\n\n\n\n\nDefault Login"
                         font.pointSize: 12
                         color: "black"
                         Layout.alignment: Qt.AlignHCenter
@@ -276,6 +285,7 @@ ApplicationWindow {
         Rectangle {
             anchors.fill: parent
             color: "white"
+
             Button {
                 Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                 text: "←"  // You can replace this with an icon if you prefer
@@ -294,7 +304,6 @@ ApplicationWindow {
                 Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
                 spacing: 20
                 anchors.centerIn: parent
-
 
                 Text {
                     text: "Default Login"
@@ -598,7 +607,7 @@ ApplicationWindow {
                 }
 
                 Text {
-                    text: "The last active users:"
+                    text: "The last active member:"
                     font.pointSize: 20
                     color: "black"
                     horizontalAlignment: Text.AlignHCenter
@@ -622,6 +631,7 @@ ApplicationWindow {
                         header: RowLayout {
                             spacing: 10
                             width: parent.width
+                            Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
 
                             Text {
                                 text: "Name"
@@ -699,6 +709,7 @@ ApplicationWindow {
                         onClicked: {
                             stackView.push(membersPage)
                             python.list_all_members_gui()
+                            // python.get_current_datetime()
                         }
                         width: 250
                         height: 80
@@ -921,7 +932,7 @@ ApplicationWindow {
                         Button {
                             id: passwordVisibilityButton7
                             checkable: true
-                            text: passwordVisibilityButton7.checked ? "🔓🔓" : "🔒"
+                            text: passwordVisibilityButton7.checked ? "🔓" : "🔒"
                             font.pixelSize: 16
                             background: Rectangle {
                                 color: "transparent"
@@ -1003,6 +1014,7 @@ ApplicationWindow {
                             spacing: 10
                             width: parent.width
                             height: 50
+                            Layout.alignment: Qt.AlignBottom | Qt.AlignHCenter
 
                             // Name Column
                             Text {
@@ -1030,13 +1042,24 @@ ApplicationWindow {
                             }
 
                             Button {
-                                text: "Edit"
+                                text: "  edit  "
+                                font.pixelSize: 14
+                                width: 100
+                                height: 40
+                                Layout.alignment: Qt.AlignHCenter
+                                background: Rectangle {
+                                    radius: 10
+                                    color: "lightgray"
+                                    border.color: "lightgray"
+                                    border.width: 1
+                                }
                                 onClicked: {
                                     editMemberDialog.memberName = name
                                     editMemberDialog.memberStatus = status
                                     editMemberDialog.accessRemaining = access_remaining
                                     editMemberDialog.id = id;
                                     editMemberDialog.open()
+                                    python.get_current_datetime()
                                 }
                             }
                         }
@@ -1058,6 +1081,7 @@ ApplicationWindow {
                     onClicked: {
                         stackView.push(newMemberPage)
                         python.clear_pictures_directory()
+                        python.get_current_datetime()
                     }
                 }
 
@@ -1135,6 +1159,7 @@ ApplicationWindow {
             ColumnLayout {
                 anchors.fill: parent
                 anchors.centerIn: parent
+                spacing: 5
 
                 // Header
                 Text {
@@ -1148,6 +1173,7 @@ ApplicationWindow {
                 // Name Field
                 RowLayout {
                     spacing: 10
+                    Layout.alignment: Qt.AlignHCenter
                     Text {
                         text: "Name:"
                         font.pixelSize: 16
@@ -1163,6 +1189,7 @@ ApplicationWindow {
                 // Status Field
                 RowLayout {
                     spacing: 10
+                    Layout.alignment: Qt.AlignHCenter
                     Text {
                         text: "Status:"
                         font.pixelSize: 16
@@ -1178,6 +1205,7 @@ ApplicationWindow {
                 // Access Remaining Field
                 RowLayout {
                     spacing: 10
+                    Layout.alignment: Qt.AlignHCenter
                     Text {
                         text: "Access Remaining:"
                         font.pixelSize: 16
@@ -1288,7 +1316,6 @@ ApplicationWindow {
     // newMemberPage layout GOOD
     Component {
         id: newMemberPage
-
 
         Item {
             id: newMemberItem
@@ -1430,7 +1457,6 @@ ApplicationWindow {
                 hourSpinBox.value,
                 minuteSpinBox.value
             )
-            dateTimeDialog.close();
         }
 
         // Action for Cancel Button

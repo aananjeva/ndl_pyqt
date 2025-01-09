@@ -18,7 +18,7 @@ from program_codes.register_response_codes import RegisterResponseCodes
 from program_codes.general_commands_response_codes import ResponseCodes
 from UserCommands import UserCommands
 from PySide6.QtCore import Signal
-from datetime import datetime
+from datetime import datetime, timedelta
 from loguru import logger
 
 class MembersModel(QAbstractListModel):
@@ -65,17 +65,19 @@ where the message is being send to the server via mqtt
 
 class GuiBackend(QObject):
     '''The signals that are send to the app interface'''
-    pictureCountChanged = Signal() #the count of taken pictures
-    onLoginSuccess = Signal() #if the login was successful
-    onRegisterSuccess = Signal() #if the registration was successful
-    membersUpdated = Signal(list) #to list all the members
-    activeMembersUpdated = Signal(list) #to list active members
-    notificationSignal = Signal(str) #to show the notifications
-    magneticLockSignal = Signal(bool) #to show the door status
-    defaultLoginSuccess = Signal() #if the default login was successful
+    pictureCountChanged = Signal()
+    loginSuccess = Signal()
+    registerSuccess = Signal()
+    membersUpdated = Signal(list)
+    activeMembersUpdated = Signal(list)
+    notificationSignal = Signal(str)
+    magneticLockSignal = Signal(bool)
+    defaultLoginSuccess = Signal()
     newMemberSignal = Signal()
     editMemberSignal = Signal()
     deleteMemberSignal = Signal()
+    changePasswordSignal = Signal()
+    saveDateSignal = Signal()
 
     members = []  #the array to keep the members
     picture_path_server = "" #the path to the face pictures of a member
@@ -131,7 +133,7 @@ class GuiBackend(QObject):
                 case LoginResponseCodes.OK:
                     logger.debug("Login successful")
                     self.trigger_notification("Login successful!")
-                    self.onLoginSuccess.emit()
+                    self.loginSuccess.emit()
                 case LoginResponseCodes.FAILED:
                     logger.debug("Login failed")
                     self.trigger_notification("Login failed!")
@@ -184,7 +186,7 @@ class GuiBackend(QObject):
                 case RegisterResponseCodes.OK:
                     logger.debug("Registration successful")
                     self.trigger_notification("Registration successful!")
-                    self.onLoginSuccess.emit()
+                    self.registerSuccess.emit()
                 case RegisterResponseCodes.FAILED:
                     logger.debug("Registration failed")
                     self.trigger_notification("Registration failed!")
@@ -215,8 +217,8 @@ class GuiBackend(QObject):
                 self.trigger_notification("Default username is not correct")
                 logger.debug("Default username is not correct")
                 return
-            # self.trigger_notification("Please wait :)")
             self.defaultLoginSuccess.emit()
+            self.trigger_notification("Default login successful!")
 
         except Exception as e:
             logger.debug(f"Error initiating login: {str(e)}")
@@ -293,59 +295,93 @@ class GuiBackend(QObject):
     '''Change password function'''
     @Slot(str, str, str)
     def change_password_button(self, current_password, new_password, repeat_password):
-        try:
-            real_password = self._user_commands.get_current_password()
-            hash_current_password = self._user_commands.hash_password(current_password)
-            if real_password != hash_current_password:
-                self.trigger_notification("The entered password is wrong!")
+        if not current_password or not new_password or not repeat_password:
+            self.trigger_notification("Please enter current password and new password")
 
-            if new_password != repeat_password:
-                self.trigger_notification("Passwords do not match!")
+        real_password = self._user_commands.get_current_password()
+        hash_current_password = self._user_commands.hash_password(current_password)
+        if real_password != hash_current_password:
+            time.sleep(0.1)
+            self.trigger_notification("The entered password is wrong!")
+        if new_password != repeat_password:
+            time.sleep(0.1)
+            self.trigger_notification("Passwords do not match!")
 
-        except Exception as e:
-            logger.debug(f"Error changing password: {e}")
-            self.trigger_notification("Please try again!")
-
-        try:
+        else:
             try:
-                with open("mqtt_responses_cached/general_commands_authorized.csv", "w") as file:
-                    file.write("")
+                try:
+                    with open("mqtt_responses_cached/general_commands_authorized.csv", "w") as file:
+                        file.write("")
+                except Exception as e:
+                    logger.debug(f"Error editing the file: {str(e)}")
+                self._user_commands.change_password(new_password)
+                time.sleep(3)
+                with open("mqtt_responses_cached/general_commands_authorized.csv", "r") as file:
+                    response = file.read().strip()
+                try:
+                    change_password_response = ResponseCodes.string_to_enum(response)
+                except Exception:
+                    change_password_response = ResponseCodes.FAILED
+
+                match change_password_response:
+                    case ResponseCodes.OK:
+                        logger.debug("Password has been changed")
+                        self.trigger_notification("Password has been changed")
+                        self.onLoginSuccess.emit()
+                        self.changePasswordSignal.emit()
+                    case ResponseCodes.FAILED:
+                        logger.debug("Failed to change password")
+                        self.trigger_notification("Failed to change password")
+                    case _:
+                        logger.debug("Please try again")
+                        self.trigger_notification("Please try again!")
+
             except Exception as e:
-                logger.debug(f"Error editing the file: {str(e)}")
-            self._user_commands.change_password(new_password)
-            with open("mqtt_responses_cached/general_commands_authorized.csv", "r") as file:
-                response = file.read().strip()
-            try:
-                change_password_response = ResponseCodes.string_to_enum(response)
-            except Exception:
-                change_password_response = ResponseCodes.FAILED
-
-            match change_password_response:
-                case ResponseCodes.OK:
-                    logger.debug("Password has been changed")
-                    self.trigger_notification("Password has been changed")
-                    self.onLoginSuccess.emit()
-                case ResponseCodes.FAILED:
-                    logger.debug("Failed to change password")
-                    self.trigger_notification("Failed to change password")
-                case _:
-                    logger.debug("Please try again")
-                    self.trigger_notification("Please try again!")
-
-        except Exception as e:
-            logger.debug(f"Error changing password: {e}")
+                logger.debug(f"Error changing password: {e}")
 
     '''Function to get the date'''
     @Slot(int, int, int, int, int)
     def get_date_button(self, year, month, day, hour, minute):
         try:
             my_date = f"{year}-{month}-{day} {hour}:{minute}:00"
+            try:
+                with open("//Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/date/current_date.txt", "r") as file:
+                    current_date = file.read().strip()
+            except Exception as e:
+                logger.debug(f"Error reading the current date: {str(e)}")
+            selected_date = datetime.strptime(my_date, "%Y-%m-%d %H:%M:%S")
+            now = datetime.strptime(current_date, "%Y-%m-%d %H:%M:%S")
+            if now > selected_date:
+                self.trigger_notification("The date is invalid")
+                self.trigger_notification("Select the date again")
+            else:
+                time_format = "%Y-%m-%d %H:%M:%S"
+                timestamp = datetime.strptime(my_date, time_format)
+                with open("date/selected_datetime.txt", "w") as file:
+                    file.write(timestamp.strftime("%Y-%m-%d %H:%M:%S"))
+                self.saveDateSignal.emit()
+                logger.debug(f"Date and Time saved: {timestamp}")
+
+        except ValueError as e:
+            logger.debug(f"Error creating datetime: {e}")
+
+    @Slot()
+    def get_current_datetime(self):
+        try:
+            # Get the current date and time
+            now = datetime.now()
+            my_date = now.strftime("%Y-%m-%d %H:%M:%S")
+
+            # Parse the datetime to make sure it's in the correct format
             time_format = "%Y-%m-%d %H:%M:%S"
             timestamp = datetime.strptime(my_date, time_format)
-            with open("date/selected_datetime.txt", "w") as file:
+
+            # Write the timestamp to a file
+            with open("date/current_date.txt", "w") as file:
                 file.write(timestamp.strftime("%Y-%m-%d %H:%M:%S"))
 
             logger.debug(f"Date and Time saved: {timestamp}")
+
         except ValueError as e:
             logger.debug(f"Error creating datetime: {e}")
 
@@ -627,3 +663,14 @@ class GuiBackend(QObject):
 
         except Exception as e:
             logger.debug(f"Error switch_change: {str(e)}")
+
+    @Slot()
+    def lock_status_manual(self, status):
+        try:
+            match status:
+                case "open":
+                    self.magneticLockSignal.emit(True)
+                case _:
+                    self.magneticLockSignal.emit(False)
+        except Exception as e:
+            logger.debug(f"Error lock_status_manual: {str(e)}")
