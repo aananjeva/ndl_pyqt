@@ -214,38 +214,6 @@ class FileTransfer:
         """
         self.__ssh.exec_command(f"mv {self.__temp_dir}/* {self.__user_dir}")
 
-
-    # def delete_file(self, resource: str, id_to_be_deleted: int) -> bool:
-    #     """
-    #     Delete a file from the specified path(resource). It also deletes a pointer to the resource form ImageIndex DB.
-    #
-    #     :param resource: The resource path of the file.
-    #     :param id_to_be_deleted: The ID of the file to be deleted.
-    #     :return: True if the file is successfully deleted, False otherwise.
-    #     :raises UserWarning: If authentication is required before continuing.
-    #     :raises Exception: If an error occurs while deleting the file.
-    #     """
-    #     if not self.__connection_established:
-    #         try:
-    #             self.__connect()
-    #         except ConnectionError:
-    #             return False
-    #
-    #     if self.__auth_payload is None:
-    #         raise UserWarning("Please login with Google before continuing.")
-    #
-    #     try:
-    #         file_name = os.path.basename(resource)
-    #         file = os.path.join(self.__save_path, file_name)
-    #         linux_path = file.replace('\\', '/')
-    #         self.__ssh.exec_command(f"rm {linux_path}")
-    #         # delete image from image index
-    #         self.__transfer.delete_image_index(id_to_be_deleted)
-    #
-    #         return True
-    #     except Exception as e:
-    #         raise e
-
     def abort(self) -> bool:
         """
         Close the connection and abort the operation.

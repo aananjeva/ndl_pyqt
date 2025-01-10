@@ -22,7 +22,6 @@ class SmartLockSystem:
 
 
 if __name__ == "__main__":
-    # trying to run the app
     # Create the QApplication instance
     # Initialize the MQTT server
     mqtt_server = MQTTServer()
@@ -43,24 +42,5 @@ if __name__ == "__main__":
     exit_code = app.exec()
     del engine
     sys.exit(exit_code)
-
-
-    # ---------------------------------------------------------------------------------------------------
-
-    #test for login
-    # mqtt = MQTTServer()
-    # mqtt.run()
-    # user_data = {"username":"root", "password":"1a6719fc847f299114cc00a430549c272fa8cab7aa8ae3e55d9c6f84c62ba102"}
-    # mqtt.send_message(json.dumps(user_data), "login")
-
-    # ---------------------------------------------------------------------------------------------------
-
-    # #test for file transfer
-    # file_tr = FileTransfer(name="test", surname="test2", file_path="/Users/anastasiaananyeva/Downloads/pics/austin-curtis-YVY61lIO_gw-unsplash.jpg")
-    # value = file_tr.file_transfer()
-    # if value:
-    #     print(value)
-
-
 
 

@@ -149,29 +149,26 @@ class GuiBackend(QObject):
     '''Register function'''
     @Slot(str, str, str)
     def register_button(self, username, password, repeat_password):
-        try:
-            if not username or not password or not repeat_password:
-                self.trigger_notification("Please enter your username and password")
-            if password != repeat_password:
-                logger.debug("Passwords do not match")
-                self.trigger_notification("Passwords do not match")
+        if not username or not password or not repeat_password:
+            self.trigger_notification("Please enter your username and password")
+        elif password != repeat_password:
+            logger.debug("Passwords do not match")
+            self.trigger_notification("Passwords do not match")
 
-            if len(password) < 8:
-                self.trigger_notification("Password must be at least 8 characters")
-                logger.debug("Password must be at least 8 characters")
-            if not re.search(r'[A-Z]', password):
-                self.trigger_notification("Password must contain at least one uppercase letter")
-                logger.debug("Password must contain at least one uppercase letter")
-            if "ndl" not in password:
-                self.trigger_notification("Password must contain the substring ndl")
-                logger.debug("Password must contain the substring ndl")
+        elif len(password) < 8:
+            self.trigger_notification("Password must be at least 8 characters")
+            logger.debug("Password must be at least 8 characters")
+        elif not re.search(r'[A-Z]', password):
+            self.trigger_notification("Password must contain at least one uppercase letter")
+            logger.debug("Password must contain at least one uppercase letter")
+        elif "ndl" not in password:
+            self.trigger_notification("Password must contain the substring ndl")
+            logger.debug("Password must contain the substring ndl")
 
-            with open("mqtt_responses_cached/register_authorized.csv", "w") as file:
-                file.write("")
-            self._user_commands.register(username, password, repeat_password)
-        except Exception as e:
-            logger.debug(f"Error initiating register: {str(e)}")
-            return
+        with open("mqtt_responses_cached/register_authorized.csv", "w") as file:
+            file.write("")
+        self._user_commands.register(username, password, repeat_password)
+
 
         self.trigger_notification("Please wait :)")
         time.sleep(3)
