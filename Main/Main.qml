@@ -88,10 +88,6 @@ ApplicationWindow {
             finishButton.enabled = backend.pictureCount === 4;
         }
 
-        onMagneticLockSignal: {
-            doorSwitch.checked = magneticLockSignal;
-        }
-
         onNewMemberSignal: {
             stackView.push(membersPage)
             python.list_all_members_gui()
@@ -562,6 +558,13 @@ ApplicationWindow {
             height: parent.height
             color: "white"
 
+            Connections {
+                target: python
+                onMagneticLockSignal: function (magneticLockSignal) {
+                    doorSwitch.checked = magneticLockSignal
+                }
+            }
+
             ColumnLayout {
                 anchors.fill: parent
                 spacing: 20
@@ -593,18 +596,22 @@ ApplicationWindow {
                 Switch {
                     id: doorSwitch
                     scale: 1.5
-                    checked: false  // Initial state
-
-                    // palette {
-                    //     highlighted: doorSwitch.checked ? "green" : "lightgrey"
-                    //     base: "white"
-                    // }
+                    checked: false
+                    Layout.alignment: Qt.AlignHCenter
 
                     onCheckedChanged: {
                         python.on_lock_unlock()
                     }
-                    Layout.alignment: Qt.AlignHCenter
                 }
+
+                Text {
+                    text: doorSwitch.checked ? "open" : "close"
+                    font.pointSize: 14
+                    color: "black"
+                    horizontalAlignment: Text.AlignHCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+
 
                 Text {
                     text: "The last active member:"
@@ -801,7 +808,7 @@ ApplicationWindow {
             repeatNewPasswordField.text = "";
         }
 
-         onVisibleChanged: {
+        onVisibleChanged: {
             if (visible) resetFields();
         }
 
@@ -1366,6 +1373,13 @@ ApplicationWindow {
                     font.bold: true
                     color: "black"
                     horizontalAlignment: Text.AlignHCenter
+                }
+
+                Text {
+                    text: "Please first take the pictures\nand then add a name"
+                    font.pointSize: 15
+                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    color: "black"
                 }
 
                 Rectangle {

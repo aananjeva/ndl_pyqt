@@ -254,12 +254,7 @@ class GuiBackend(QObject):
     def list_active_members_gui(self):
         members = []
         try:
-            try:
-                with open("mqtt_responses_cached/list_active_members_authorized.csv", "w") as file:
-                    file.write("")
-                self._user_commands.active_members()
-            except Exception as e:
-                logger.debug(f"Error reading active members: {str(e)}")
+            self._user_commands.active_members()
 
             time.sleep(5)
             csv_file = "mqtt_responses_cached/list_active_members_authorized.csv"
