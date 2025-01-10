@@ -41,7 +41,7 @@ ApplicationWindow {
             python.lock_listener()
         }
 
-        onOegisterSuccess: {
+        onRegisterSuccess: {
             stackView.push(mainPage)
             python.list_active_members_gui()
             python.lock_listener()
@@ -172,7 +172,7 @@ ApplicationWindow {
                         placeholderText: "username"
                         anchors.fill: parent
                         padding: 10
-                        font.pointSize: 18
+                        font.pointSize: 16
                         verticalAlignment: TextInput.AlignVCenter
                         background: Rectangle {
                             color: "transparent" // Keeps parent background visible
@@ -195,7 +195,7 @@ ApplicationWindow {
                             id: passwordField
                             placeholderText: "password"
                             Layout.fillWidth: true
-                            font.pointSize: 18
+                            font.pointSize: 16
                             echoMode: passwordVisibilityButton1.checked ? TextInput.Normal : TextInput.Password
                             verticalAlignment: TextInput.AlignVCenter
                             background: Rectangle {
@@ -328,7 +328,7 @@ ApplicationWindow {
                         placeholderText: "default username"
                         anchors.fill: parent
                         padding: 10
-                        font.pointSize: 18
+                        font.pointSize: 16
                         verticalAlignment: TextInput.AlignVCenter
                         background: Rectangle {
                             color: "transparent" // Keeps parent background visible
@@ -350,7 +350,7 @@ ApplicationWindow {
                             id: defaultPasswordField
                             placeholderText: "password"
                             Layout.fillWidth: true
-                            font.pointSize: 18
+                            font.pointSize: 16
                             echoMode: passwordVisibilityButton2.checked ? TextInput.Normal : TextInput.Password
                             verticalAlignment: TextInput.AlignVCenter
                             background: Rectangle {
@@ -444,7 +444,7 @@ ApplicationWindow {
                         placeholderText: "username"
                         anchors.fill: parent
                         padding: 10
-                        font.pointSize: 18
+                        font.pointSize: 16
                         verticalAlignment: TextInput.AlignVCenter
                         background: Rectangle {
                             color: "transparent" // Keeps parent background visible
@@ -466,7 +466,7 @@ ApplicationWindow {
                             id: registerPasswordField
                             placeholderText: "password"
                             Layout.fillWidth: true
-                            font.pointSize: 18
+                            font.pointSize: 16
                             echoMode: passwordVisibilityButton3.checked ? TextInput.Normal : TextInput.Password
                             verticalAlignment: TextInput.AlignVCenter
                             background: Rectangle {
@@ -506,7 +506,7 @@ ApplicationWindow {
                             id: repeatPasswordField
                             placeholderText: "password"
                             Layout.fillWidth: true
-                            font.pointSize: 18
+                            font.pointSize: 16
                             echoMode: passwordVisibilityButton4.checked ? TextInput.Normal : TextInput.Password
                             verticalAlignment: TextInput.AlignVCenter
                             background: Rectangle {
@@ -794,6 +794,16 @@ ApplicationWindow {
         standardButtons: DialogButtonBox.Ok | DialogButtonBox.Cancel
         visible: false
         anchors.centerIn: parent
+
+        function resetFields() {
+            currentPasswordField.text = "";
+            newPasswordField.text = "";
+            repeatNewPasswordField.text = "";
+        }
+
+         onVisibleChanged: {
+            if (visible) resetFields();
+        }
 
         onAccepted: {
             python.change_password_button(

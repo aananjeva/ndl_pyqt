@@ -64,7 +64,7 @@ where the message is being send to the server via mqtt
 '''
 
 class GuiBackend(QObject):
-    '''The signals that are send to the app interface'''
+    """The signals that are send to the app interface"""
     pictureCountChanged = Signal()
     loginSuccess = Signal()
     registerSuccess = Signal()
@@ -105,6 +105,8 @@ class GuiBackend(QObject):
     def trigger_notification(self, message):
         self.notificationSignal.emit(message)
 
+
+    '''Main functions'''
     '''Login function'''
     @Slot(str, str)
     def login_button(self, username, password):
@@ -295,16 +297,13 @@ class GuiBackend(QObject):
     '''Change password function'''
     @Slot(str, str, str)
     def change_password_button(self, current_password, new_password, repeat_password):
-        if not current_password or not new_password or not repeat_password:
-            self.trigger_notification("Please enter current password and new password")
-
         real_password = self._user_commands.get_current_password()
         hash_current_password = self._user_commands.hash_password(current_password)
-        if real_password != hash_current_password:
-            time.sleep(0.1)
+        if not current_password or not new_password or not repeat_password:
+            self.trigger_notification("Please enter current password and new password")
+        elif real_password != hash_current_password:
             self.trigger_notification("The entered password is wrong!")
-        if new_password != repeat_password:
-            time.sleep(0.1)
+        elif new_password != repeat_password:
             self.trigger_notification("Passwords do not match!")
 
         else:
@@ -327,7 +326,6 @@ class GuiBackend(QObject):
                     case ResponseCodes.OK:
                         logger.debug("Password has been changed")
                         self.trigger_notification("Password has been changed")
-                        self.onLoginSuccess.emit()
                         self.changePasswordSignal.emit()
                     case ResponseCodes.FAILED:
                         logger.debug("Failed to change password")
@@ -339,51 +337,6 @@ class GuiBackend(QObject):
             except Exception as e:
                 logger.debug(f"Error changing password: {e}")
 
-    '''Function to get the date'''
-    @Slot(int, int, int, int, int)
-    def get_date_button(self, year, month, day, hour, minute):
-        try:
-            my_date = f"{year}-{month}-{day} {hour}:{minute}:00"
-            try:
-                with open("//Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/date/current_date.txt", "r") as file:
-                    current_date = file.read().strip()
-            except Exception as e:
-                logger.debug(f"Error reading the current date: {str(e)}")
-            selected_date = datetime.strptime(my_date, "%Y-%m-%d %H:%M:%S")
-            now = datetime.strptime(current_date, "%Y-%m-%d %H:%M:%S")
-            if now > selected_date:
-                self.trigger_notification("The date is invalid")
-                self.trigger_notification("Select the date again")
-            else:
-                time_format = "%Y-%m-%d %H:%M:%S"
-                timestamp = datetime.strptime(my_date, time_format)
-                with open("date/selected_datetime.txt", "w") as file:
-                    file.write(timestamp.strftime("%Y-%m-%d %H:%M:%S"))
-                self.saveDateSignal.emit()
-                logger.debug(f"Date and Time saved: {timestamp}")
-
-        except ValueError as e:
-            logger.debug(f"Error creating datetime: {e}")
-
-    @Slot()
-    def get_current_datetime(self):
-        try:
-            # Get the current date and time
-            now = datetime.now()
-            my_date = now.strftime("%Y-%m-%d %H:%M:%S")
-
-            # Parse the datetime to make sure it's in the correct format
-            time_format = "%Y-%m-%d %H:%M:%S"
-            timestamp = datetime.strptime(my_date, time_format)
-
-            # Write the timestamp to a file
-            with open("date/current_date.txt", "w") as file:
-                file.write(timestamp.strftime("%Y-%m-%d %H:%M:%S"))
-
-            logger.debug(f"Date and Time saved: {timestamp}")
-
-        except ValueError as e:
-            logger.debug(f"Error creating datetime: {e}")
 
     '''Functions for handling operations on members'''
     '''Function to create a new member'''
@@ -529,7 +482,110 @@ class GuiBackend(QObject):
         except Exception as e:
             logger.debug(f"Error editing the file: {str(e)}")
 
+
+    '''Functions for the lock'''
+    '''Reads the lock state from a file, interprets it, and emits a signal'''
+    @Slot()
+    def lock_listener(self):
+        try:
+            with open(f"mqtt_responses_cached/magnetic_lock_authorized.csv", "r") as file:
+                response = file.read().strip()
+            try:
+                magnetic_lock_code = MagneticLockResponseCodes.string_to_enum(response)
+            except Exception:
+                magnetic_lock_code = MagneticLockResponseCodes.CLOSE
+
+            match magnetic_lock_code:
+                case MagneticLockResponseCodes.OPEN:
+                    logger.debug("Open")
+                    self.magneticLockSignal.emit(True)
+                case MagneticLockResponseCodes.CLOSE:
+                    logger.debug("Close")
+                    self.magneticLockSignal.emit(False)
+                case _:
+                    logger.debug("Please try again")
+                    self.magneticLockSignal.emit(False)
+        except Exception as e:
+            logger.debug(f"Error lock listener: {str(e)}")
+
+    '''Reads the lock state from a file, toggles the state, and sends the new state via MQTT'''
+    @Slot()
+    def on_lock_unlock(self):
+        try:
+            with open(f"mqtt_responses_cached/magnetic_lock_authorized.csv", "r") as file:
+                response = file.read().strip()
+            try:
+                if response == "open":
+                    magnetic_lock_code = MagneticLockResponseCodes.CLOSE
+                else:
+                    magnetic_lock_code = MagneticLockResponseCodes.OPEN
+            except Exception:
+                magnetic_lock_code = MagneticLockResponseCodes.CLOSE
+
+            self._mqtt.send_message(str(magnetic_lock_code), "magnetic_lock")
+
+        except Exception as e:
+            logger.debug(f"Error switch_change: {str(e)}")
+
+    '''Sets the lock state manually based on the provided input and emits a signal'''
+    @Slot()
+    def lock_status_manual(self, status):
+        try:
+            match status:
+                case "open":
+                    self.magneticLockSignal.emit(True)
+                case _:
+                    self.magneticLockSignal.emit(False)
+        except Exception as e:
+            logger.debug(f"Error lock_status_manual: {str(e)}")
+
+
     '''Helper functions'''
+    '''Function to get the date'''
+    @Slot(int, int, int, int, int)
+    def get_date_button(self, year, month, day, hour, minute):
+        try:
+            my_date = f"{year}-{month}-{day} {hour}:{minute}:00"
+            try:
+                with open("//Users/anastasiaananyeva/PycharmProjects/ndl_pyqt/date/current_date.txt", "r") as file:
+                    current_date = file.read().strip()
+            except Exception as e:
+                logger.debug(f"Error reading the current date: {str(e)}")
+            selected_date = datetime.strptime(my_date, "%Y-%m-%d %H:%M:%S")
+            now = datetime.strptime(current_date, "%Y-%m-%d %H:%M:%S")
+            if now > selected_date:
+                self.trigger_notification("The date is invalid\nSelect the date again")
+            else:
+                time_format = "%Y-%m-%d %H:%M:%S"
+                timestamp = datetime.strptime(my_date, time_format)
+                with open("date/selected_datetime.txt", "w") as file:
+                    file.write(timestamp.strftime("%Y-%m-%d %H:%M:%S"))
+                self.saveDateSignal.emit()
+                logger.debug(f"Date and Time saved: {timestamp}")
+
+        except ValueError as e:
+            logger.debug(f"Error creating datetime: {e}")
+    '''Function to get the current date'''
+    @Slot()
+    def get_current_datetime(self):
+        try:
+            # Get the current date and time
+            now = datetime.now()
+            my_date = now.strftime("%Y-%m-%d %H:%M:%S")
+
+            # Parse the datetime to make sure it's in the correct format
+            time_format = "%Y-%m-%d %H:%M:%S"
+            timestamp = datetime.strptime(my_date, time_format)
+
+            # Write the timestamp to a file
+            with open("date/current_date.txt", "w") as file:
+                file.write(timestamp.strftime("%Y-%m-%d %H:%M:%S"))
+
+            logger.debug(f"Date and Time saved: {timestamp}")
+
+        except ValueError as e:
+            logger.debug(f"Error creating datetime: {e}")
+
     @Slot()
     def take_picture(self):
         try:
@@ -623,54 +679,3 @@ class GuiBackend(QObject):
         else:
             QMessageBox.information(None, "Complete", "You have taken all 4 pictures!")
 
-    @Slot()
-    def lock_listener(self):
-        try:
-            with open(f"mqtt_responses_cached/magnetic_lock_authorized.csv", "r") as file:
-                response = file.read().strip()
-            try:
-                magnetic_lock_code = MagneticLockResponseCodes.string_to_enum(response)
-            except Exception:
-                magnetic_lock_code = MagneticLockResponseCodes.CLOSE
-
-            match magnetic_lock_code:
-                case MagneticLockResponseCodes.OPEN:
-                    logger.debug("Open")
-                    self.magneticLockSignal.emit(True)
-                case MagneticLockResponseCodes.CLOSE:
-                    logger.debug("Close")
-                    self.magneticLockSignal.emit(False)
-                case _:
-                    logger.debug("Please try again")
-                    self.magneticLockSignal.emit(False)
-        except Exception as e:
-            logger.debug(f"Error lock listener: {str(e)}")
-
-    @Slot()
-    def on_lock_unlock(self):
-        try:
-            with open(f"mqtt_responses_cached/magnetic_lock_authorized.csv", "r") as file:
-                response = file.read().strip()
-            try:
-                if response == "open":
-                    magnetic_lock_code = MagneticLockResponseCodes.CLOSE
-                else:
-                    magnetic_lock_code = MagneticLockResponseCodes.OPEN
-            except Exception:
-                magnetic_lock_code = MagneticLockResponseCodes.CLOSE
-
-            self._mqtt.send_message(str(magnetic_lock_code), "magnetic_lock")
-
-        except Exception as e:
-            logger.debug(f"Error switch_change: {str(e)}")
-
-    @Slot()
-    def lock_status_manual(self, status):
-        try:
-            match status:
-                case "open":
-                    self.magneticLockSignal.emit(True)
-                case _:
-                    self.magneticLockSignal.emit(False)
-        except Exception as e:
-            logger.debug(f"Error lock_status_manual: {str(e)}")

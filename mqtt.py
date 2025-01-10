@@ -35,7 +35,7 @@ class MQTTServer:
         self._client.subscribe("all_members/response")
         self._client.subscribe("add_member/response")
         self._client.subscribe("delete/response")
-        self._client.subscribe("lock")
+        self._client.subscribe("magnetic_lock")
         self._client.subscribe("change_password/response")
 
 
@@ -58,7 +58,7 @@ class MQTTServer:
                 case "last_active_person":
                     payload = msg.payload.decode()
                     on_list_active_members_response(payload)
-                case "lock":
+                case "magnetic_lock":
                     payload = msg.payload.decode()
                     on_magnetic_lock_response(payload)
                 case "login/response":
