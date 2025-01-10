@@ -1,14 +1,11 @@
 import paho.mqtt.client as mqtt
-import time
 import threading
 
-from user_commands.delete_member_response import on_delete_member_response
-from user_commands.edit_member_response import on_edit_member_response
-from user_commands.forgot_password_response import on_forgot_password_response
+from user_commands.magnetic_lock_response import on_magnetic_lock_response
 from user_commands.list_active_members_response import on_list_active_members_response
 from user_commands.list_all_members_response import on_list_all_members_response
-from user_commands.new_member_response import on_new_member_response
 from user_commands.register_response import on_register_response
+from user_commands.general_commands_response import on_general_commands_response
 from util.endpoints import Endpoints
 from user_commands.login_response import on_login_response
 
@@ -18,7 +15,7 @@ class MQTTServer:
         self._endpoints = Endpoints()
         # MQTT server config
         # broker here is the mosquito broker running on the pi
-        self._broker = "192.168.1.75"
+        self._broker = "192.168.1.75" #used to be: 100.100.6.69
         self._port = 1883
         self._topic = "weird-stuff"
         # set up MQTT client
@@ -28,41 +25,50 @@ class MQTTServer:
         self._connect()
         # subscribe to the topic I need to listen to
         self._client.subscribe("mqtt_responses_cached")
+        self._client.subscribe("magnetic_lock_status")
+        self._client.subscribe("login/response")
+        self._client.subscribe("register/response")
+        self._client.subscribe("edit_member_status/response")
+        self._client.subscribe("forgot_password/response")
+        self._client.subscribe("last_active_person")
+        self._client.subscribe("all_members/response")
+        self._client.subscribe("add_member/response")
+        self._client.subscribe("delete/response")
         self._client.subscribe("magnetic_lock")
-        self._client.subscribe("login_response")
+        self._client.subscribe("change_password/response")
 
 
     @classmethod
     def _on_message(cls, client, userdata, msg):
         try:
             match msg.topic:
-                case "forgot_password_response":
-                    payload = msg.payload.decode()
-                    on_forgot_password_response(payload)
-                case "register_response":
+                case "register/response":
                     payload = msg.payload.decode()
                     on_register_response(payload)
-                case "new_member_response":
+                case "add_member/response":
                     payload = msg.payload.decode()
-                    on_new_member_response(payload)
-                case "edit_member_response":
+                    on_general_commands_response(payload)
+                case "delete/response":
                     payload = msg.payload.decode()
-                    on_edit_member_response(payload)
-                case "delete_member_response":
-                    payload = msg.payload.decode()
-                    on_delete_member_response(payload)
-                case "all_members_response":
+                    on_general_commands_response(payload)
+                case "all_members/response":
                     payload = msg.payload.decode()
                     on_list_all_members_response(payload)
-                case "active_members_response":
+                case "last_active_person":
                     payload = msg.payload.decode()
                     on_list_active_members_response(payload)
                 case "magnetic_lock":
                     payload = msg.payload.decode()
-                    print(payload)
-                case "login_response":
+                    on_magnetic_lock_response(payload)
+                case "login/response":
                     payload = msg.payload.decode()
                     on_login_response(payload)
+                case "change_password/response":
+                    payload = msg.payload.decode()
+                    on_general_commands_response(payload)
+                case "edit_member_status/response":
+                    payload = msg.payload.decode()
+                    on_general_commands_response(payload)
                 case _:
                     pass
         except Exception as e:

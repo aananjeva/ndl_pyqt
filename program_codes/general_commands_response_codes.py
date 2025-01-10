@@ -1,6 +1,6 @@
 from enum import Enum
 
-class ForgotPasswordResponseCodes(Enum):
+class ResponseCodes(Enum):
     OK = 1,
     FAILED = 0
 
@@ -13,10 +13,10 @@ class ForgotPasswordResponseCodes(Enum):
         try:
             match string_lowercase:
                 case "ok":
-                    return ForgotPasswordResponseCodes.OK
+                    return ResponseCodes.OK
                 case "failed":
-                    return ForgotPasswordResponseCodes.FAILED
+                    return ResponseCodes.FAILED
                 case _:
                     raise ValueError
         except ValueError:
-            raise Exception("The button was not pressed")
+            raise Exception("The command did not succeed")
