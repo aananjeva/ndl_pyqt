@@ -18,7 +18,7 @@ from program_codes.register_response_codes import RegisterResponseCodes
 from program_codes.general_commands_response_codes import ResponseCodes
 from UserCommands import UserCommands
 from PySide6.QtCore import Signal
-from datetime import datetime, timedelta
+from datetime import datetime
 from loguru import logger
 
 class MembersModel(QAbstractListModel):
@@ -352,7 +352,7 @@ class GuiBackend(QObject):
             values = [x for x in name_trimmed if x]
             name = values[0] if len(values) >= 1 else ""
             surname = values[1] if len(values) >= 2 else ""
-            self.picture_path_server = f"/home/ubuntu/images/{name}_{surname}"
+            self.picture_path_server = f"/home/ndl/images/{name}_{surname}" #f"/home/ubuntu/images/{name}_{surname}"
             full_name = name + " " + surname
 
             try:
@@ -374,7 +374,7 @@ class GuiBackend(QObject):
                 status = "authorized"
 
             self._user_commands.create_new_member(full_name, pictures_dir, self.picture_path_server, status)
-            time.sleep(15)
+            time.sleep(45)
             self.clear_pictures_directory()
 
             with open(f"mqtt_responses_cached/general_commands_authorized.csv", "r") as file:
@@ -391,7 +391,7 @@ class GuiBackend(QObject):
                     self.trigger_notification("Please reload the page")
                     logger.debug("New member was created")
                 case ResponseCodes.FAILED:
-                    # self.trigger_notification("Failed to create new member")
+                    self.trigger_notification("Failed to create new member")
                     self.newMemberSignal.emit()
                     logger.debug("Failed to create new member")
                 case _:

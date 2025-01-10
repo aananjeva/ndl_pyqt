@@ -1,5 +1,4 @@
 import paho.mqtt.client as mqtt
-import time
 import threading
 
 from user_commands.magnetic_lock_response import on_magnetic_lock_response
@@ -16,7 +15,7 @@ class MQTTServer:
         self._endpoints = Endpoints()
         # MQTT server config
         # broker here is the mosquito broker running on the pi
-        self._broker = "100.100.6.69" #used to be: 192.168.1.75
+        self._broker = "192.168.1.75" #used to be: 100.100.6.69
         self._port = 1883
         self._topic = "weird-stuff"
         # set up MQTT client

@@ -585,7 +585,7 @@ ApplicationWindow {
 
                 Text {
                     id: doorStatusText
-                    text: "The door is unlocked"
+                    text: "SmartLock System"
                     font.bold: true
                     font.pointSize: 24
                     horizontalAlignment: Text.AlignHCenter
@@ -1379,6 +1379,7 @@ ApplicationWindow {
                     text: "Please first take the pictures\nand then add a name"
                     font.pointSize: 15
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    horizontalAlignment: Text.AlignHCenter
                     color: "black"
                 }
 
@@ -1411,7 +1412,6 @@ ApplicationWindow {
                 }
 
                 RowLayout {
-
                     Text {
                         text: "Select status"
                         font.pointSize: 18
@@ -1434,9 +1434,10 @@ ApplicationWindow {
                 }
 
                 Text {
-                    text: "You will have to wait 15 seconds\nfor new member to be created"
+                    text: "You will have to wait 45 seconds\nfor new member to be created"
                     font.pointSize: 15
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    horizontalAlignment: Text.AlignHCenter
                     color: "black"
                 }
             }

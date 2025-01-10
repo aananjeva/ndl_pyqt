@@ -4,7 +4,7 @@ import QtQuick.Controls 6.0
 
 Rectangle {
     id: notification
-    width: parent.width * 0.5
+    width: parent.width * 0.7
     height: 30
     radius: 10
     color: "gray"
@@ -25,7 +25,6 @@ Rectangle {
     // Animation to fade in and out
     SequentialAnimation {
         id: showAnimation
-        PauseAnimation { duration: 200 } // Delay before showing
         PropertyAnimation { target: notification; property: "opacity"; to: 1; duration: 500 }
         PauseAnimation { duration: 3000 } // Duration the notification stays visible
         PropertyAnimation { target: notification; property: "opacity"; to: 0; duration: 500 }
